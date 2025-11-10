@@ -613,12 +613,7 @@ function renderStoresForSearch() {
         `;
     }).join('');
 
-    container.innerHTML = `
-        <div style="margin-bottom: 10px;">
-            <strong>Select FileStore to Search:</strong>
-        </div>
-        ${storeRadios}
-    `;
+    container.innerHTML = storeRadios;
 
     if (state.stores.length > 0) {
         state.selectedStoreId = state.stores[0].store_name;
