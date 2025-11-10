@@ -105,6 +105,31 @@ def get_store(store_id):
             return jsonify(result), 404
 
     except Exception as e:
+        logger.error(f'스토어 조회 중 예외 발생 - IP: {client_ip} - 에러: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/stores/<path:store_id>/documents', methods=['GET'])
+def get_store_documents(store_id):
+    """FileSearchStore의 문서 목록 조회"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+
+    try:
+        logger.info(f'스토어 문서 목록 조회 요청 - 스토어ID: {store_id} - IP: {client_ip}')
+
+        gemini = GeminiClient(current_app.config['GEMINI_API_KEY'])
+        result = gemini.list_documents_in_store(store_id)
+
+        if result['success']:
+            doc_count = result.get('count', 0)
+            logger.info(f'스토어 문서 목록 조회 성공 - 스토어ID: {store_id} - 개수: {doc_count} - IP: {client_ip}')
+            logger.debug(f'조회된 문서: {result.get("documents")} - IP: {client_ip}')
+            return jsonify(result), 200
+        else:
+            logger.error(f'스토어 문서 목록 조회 실패 - 스토어ID: {store_id} - 에러: {result.get("error")} - IP: {client_ip}')
+            return jsonify(result), 400
+
+    except Exception as e:
         logger.error(f'스토어 조회 예외 발생 - 스토어ID: {store_id} - IP: {client_ip} - 에러: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 

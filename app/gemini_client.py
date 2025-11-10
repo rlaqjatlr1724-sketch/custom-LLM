@@ -155,6 +155,52 @@ class GeminiClient:
                 "error": str(e)
             }
 
+    def list_documents_in_store(self, store_name: str, page_size: int = 10) -> Dict[str, Any]:
+        """
+        List all documents in a FileSearchStore
+
+        Args:
+            store_name: Name of the FileSearchStore
+            page_size: Maximum documents per page (default: 10, max: 20)
+
+        Returns:
+            Dict with success status and list of documents
+        """
+        try:
+            self.logger.info(f"Listing documents in FileSearchStore: {store_name}")
+
+            documents = self.client.file_search_stores.documents.list(
+                parent=store_name,
+                page_size=page_size
+            )
+
+            document_list = []
+            for doc in documents:
+                doc_info = {
+                    "document_name": doc.name if hasattr(doc, 'name') else None,
+                    "display_name": doc.display_name if hasattr(doc, 'display_name') else None,
+                    "mime_type": doc.mime_type if hasattr(doc, 'mime_type') else None,
+                    "create_time": str(doc.create_time) if hasattr(doc, 'create_time') else None,
+                    "update_time": str(doc.update_time) if hasattr(doc, 'update_time') else None,
+                    "size_bytes": doc.size_bytes if hasattr(doc, 'size_bytes') else None,
+                }
+                document_list.append(doc_info)
+
+            self.logger.info(f"Found {len(document_list)} documents in store {store_name}")
+            return {
+                "success": True,
+                "documents": document_list,
+                "count": len(document_list),
+                "store_name": store_name
+            }
+        except Exception as e:
+            self.logger.error(f"Error listing documents in store {store_name}: {str(e)}", exc_info=True)
+            return {
+                "success": False,
+                "error": str(e),
+                "documents": []
+            }
+
     # ==================== File Management Methods ====================
 
     def upload_file(self, file_path: str) -> Dict[str, Any]:

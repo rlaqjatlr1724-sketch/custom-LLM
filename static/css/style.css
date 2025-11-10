@@ -1028,3 +1028,76 @@ body {
         transform: rotate(360deg);
     }
 }
+
+/* FileStore 상세 뷰 */
+.store-detail-view {
+    background-color: var(--bg-primary);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.store-detail-view h3 {
+    color: var(--primary-color);
+    margin: 15px 0;
+    font-size: 24px;
+}
+
+.store-documents {
+    margin-top: 20px;
+}
+
+.store-documents h4 {
+    color: var(--text-primary);
+    margin-bottom: 15px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.document-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 12px;
+}
+
+.document-item {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: var(--transition);
+}
+
+.document-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.doc-name {
+    color: var(--text-primary);
+    font-weight: 500;
+    word-break: break-word;
+    font-size: 14px;
+}
+
+.doc-type {
+    color: var(--text-secondary);
+    font-size: 12px;
+    background-color: var(--bg-tertiary);
+    padding: 4px 8px;
+    border-radius: 4px;
+    width: fit-content;
+}
+
+.empty-message {
+    color: var(--text-secondary);
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+}

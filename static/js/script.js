@@ -462,19 +462,19 @@ function renderStores() {
     }
 
     const storeCards = state.stores.map(store => {
-        const fileCount = 0; // API에서 파일 개수 정보 미제공
+        const fileCount = store.file_count || 0;
         const createdDate = new Date(store.create_time).toLocaleDateString('ko-KR');
 
         return `
-            <div class="store-card">
+            <div class="store-card" onclick="showStoreDocuments('${store.store_name}', '${store.display_name}')">
                 <div class="store-header">
                     <h3>${store.display_name}</h3>
-                    <button class="btn btn-danger btn-sm" onclick="deleteStore('${store.store_name}', '${store.display_name}')">삭제</button>
+                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteStore('${store.store_name}', '${store.display_name}')">삭제</button>
                 </div>
                 <div class="store-info">
                     <div class="store-stat">
                         <span class="store-label">파일 수:</span>
-                        <span class="store-value">${fileCount}개</span>
+                        <span class="store-value file-count-${store.store_name.replace(/\//g, '-')}">${fileCount}개</span>
                     </div>
                     <div class="store-stat">
                         <span class="store-label">생성일:</span>
@@ -896,6 +896,61 @@ async function confirmImportFile() {
     } catch (error) {
         showToast(`에러: ${error.message}`, 'error');
         importStatus.innerHTML = `<div class="error-message">❌ 에러: ${error.message}</div>`;
+    }
+}
+
+// ============================================================================
+// FileStore 문서 조회
+// ============================================================================
+async function showStoreDocuments(storeName, displayName) {
+    const storesContainer = document.getElementById('storesList');
+
+    try {
+        const response = await fetch(`/api/stores/${encodeURIComponent(storeName)}/documents`);
+        const data = await response.json();
+
+        if (data.success) {
+            const documents = data.documents || [];
+            const documentCount = data.count || 0;
+
+            // Store 카드 업데이트 - 파일 수 표시
+            const fileCountElement = document.querySelector(`.file-count-${storeName.replace(/\//g, '-')}`);
+            if (fileCountElement) {
+                fileCountElement.textContent = `${documentCount}개`;
+            }
+
+            // 문서 목록 표시
+            const documentListHtml = documents.length > 0
+                ? `
+                    <div class="store-documents">
+                        <h4>저장된 문서 (${documentCount}개)</h4>
+                        <ul class="document-list">
+                            ${documents.map(doc => `
+                                <li class="document-item">
+                                    <span class="doc-name">${doc.display_name || 'Untitled'}</span>
+                                    <span class="doc-type">${doc.mime_type || 'Unknown'}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `
+                : '<p class="empty-message">저장된 문서가 없습니다</p>';
+
+            // Store 카드를 확장된 뷰로 변경
+            storesContainer.innerHTML = `
+                <div class="store-detail-view">
+                    <button class="btn btn-secondary" onclick="loadStores()">← 돌아가기</button>
+                    <h3>${displayName}</h3>
+                    ${documentListHtml}
+                </div>
+            `;
+
+            showToast(`${displayName}의 문서 목록을 불러왔습니다`, 'success');
+        } else {
+            showToast(`문서 목록 불러오기 실패: ${data.error}`, 'error');
+        }
+    } catch (error) {
+        showToast(`에러: ${error.message}`, 'error');
     }
 }
 
