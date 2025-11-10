@@ -334,13 +334,7 @@ def search():
         logger.error(f'검색 예외 발생 - IP: {client_ip} - 에러: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
 
-@bp.route('/api/files/<path:file_id>/preview', methods=['GET'])
-def preview_file(file_id):
-    """파일 미리보기/다운로드"""
-    logger.info(f'파일 미리보기 요청 - File ID: {file_id}, IP: {request.remote_addr}')
-    try:
-        gemini = GeminiClient(current_app.config['GEMINI_API_KEY'])
-        file_info = gemini.get_file(file_id)
+# ==================== File Preview Route ====================
 
 @bp.route('/api/files/<path:file_id>/preview', methods=['GET'])
 def preview_file(file_id):
