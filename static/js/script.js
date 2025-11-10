@@ -283,6 +283,7 @@ function renderFiles() {
                 <div class="file-card-header">
                     <div class="file-icon">${getFileIcon(fileName)}</div>
                     <div class="file-card-actions">
+                        <button title="보기" onclick="previewFile('${fileId}', '${fileName}')">👁️</button>
                         <button title="삭제" onclick="deleteFile('${fileId}', '${fileName}')">🗑️</button>
                     </div>
                 </div>
@@ -336,6 +337,37 @@ async function deleteFile(fileId, fileName) {
         }
     } catch (error) {
         showToast(`삭제 실패: ${error.message}`, 'error');
+    }
+}
+
+// 파일 미리보기
+async function previewFile(fileId, fileName) {
+    try {
+        // Remove 'files/' prefix if it exists
+        const cleanFileId = fileId.replace(/^files\//, '');
+        const response = await fetch(`/api/files/${cleanFileId}/preview`);
+        const data = await response.json();
+
+        if (!data.success) {
+            showToast(`미리보기 불가: ${data.error}`, 'error');
+            return;
+        }
+
+        // 파일 정보 모달 표시 또는 새 창에서 열기
+        if (data.mime_type?.startsWith('application/pdf')) {
+            // PDF는 새 창에서 열기
+            window.open(data.uri, '_blank');
+        } else if (data.mime_type?.startsWith('text/')) {
+            // 텍스트는 모달에서 보기
+            alert(`파일: ${fileName}\n크기: ${(data.size_bytes / 1024 / 1024).toFixed(2)} MB\n\n파일 정보: ${data.uri}`);
+        } else {
+            // 다른 파일은 직접 링크 제공
+            window.open(data.uri, '_blank');
+        }
+
+        showToast(`${fileName} 미리보기 열기`, 'success');
+    } catch (error) {
+        showToast(`미리보기 오류: ${error.message}`, 'error');
     }
 }
 

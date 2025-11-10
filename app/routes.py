@@ -333,3 +333,49 @@ def search():
     except Exception as e:
         logger.error(f'검색 예외 발생 - IP: {client_ip} - 에러: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/files/<path:file_id>/preview', methods=['GET'])
+def preview_file(file_id):
+    """파일 미리보기/다운로드"""
+    logger.info(f'파일 미리보기 요청 - File ID: {file_id}, IP: {request.remote_addr}')
+    try:
+        gemini = GeminiClient(current_app.config['GEMINI_API_KEY'])
+        file_info = gemini.get_file(file_id)
+
+@bp.route('/api/files/<path:file_id>/preview', methods=['GET'])
+def preview_file(file_id):
+    """파일 미리보기/다운로드"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+    
+    # file_id에서 "files/" 제거 (중복 방지)
+    if not file_id.startswith('files/'):
+        file_id = f"files/{file_id}"
+    
+    logger.info(f'파일 미리보기 요청 - File ID: {file_id}, IP: {client_ip}')
+    try:
+        gemini = GeminiClient(current_app.config['GEMINI_API_KEY'])
+        file_info = gemini.get_file(file_id)
+        
+        if not file_info.get('success'):
+            logger.warning(f'파일 조회 실패 - File ID: {file_id}')
+            return jsonify({'success': False, 'error': 'File not found'}), 404
+        
+        # 파일 URI를 반환 (클라이언트에서 직접 접근 가능)
+        file_uri = file_info.get('uri')
+        if not file_uri:
+            logger.warning(f'파일 URI 없음 - File ID: {file_id}')
+            return jsonify({'success': False, 'error': 'File URI not available'}), 400
+        
+        logger.info(f'파일 미리보기 정보 반환 - File ID: {file_id}')
+        return jsonify({
+            'success': True,
+            'file_id': file_id,
+            'display_name': file_info.get('display_name'),
+            'mime_type': file_info.get('mime_type'),
+            'size_bytes': file_info.get('size_bytes'),
+            'uri': file_uri
+        }), 200
+    except Exception as e:
+        logger.error(f'파일 미리보기 중 오류 발생: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
