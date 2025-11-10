@@ -1,5 +1,5 @@
 // ============================================================================
-// 상태 관리
+// State Management
 // ============================================================================
 const state = {
     files: [],
@@ -9,7 +9,7 @@ const state = {
 };
 
 // ============================================================================
-// DOM 요소
+// DOM Elements
 // ============================================================================
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
@@ -28,7 +28,7 @@ const selectAllBtn = document.getElementById('selectAllBtn');
 const closeResultBtn = document.getElementById('closeResultBtn');
 
 // ============================================================================
-// 초기화
+// Initialization
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
@@ -37,39 +37,39 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================================
-// 이벤트 리스너 설정
+// Event Listeners Setup
 // ============================================================================
 function setupEventListeners() {
-    // 탭 네비게이션
+    // Tab navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', handleTabChange);
     });
 
-    // 파일 업로드
+    // File upload
     uploadArea.addEventListener('click', () => fileInput.click());
     uploadArea.addEventListener('dragover', handleDragOver);
     uploadArea.addEventListener('dragleave', handleDragLeave);
     uploadArea.addEventListener('drop', handleDrop);
     fileInput.addEventListener('change', handleFileSelect);
 
-    // 파일 목록
+    // File list
     refreshFilesBtn.addEventListener('click', loadFiles);
 
-    // 검색
+    // Search
     searchBtn.addEventListener('click', performSearch);
     selectAllBtn.addEventListener('click', toggleSelectAll);
     closeResultBtn.addEventListener('click', () => {
         searchResult.style.display = 'none';
     });
 
-    // Enter 키로 검색 (Ctrl+Enter)
+    // Search with Ctrl+Enter
     searchQuery.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 'Enter') {
             performSearch();
         }
     });
 
-    // Import 패널 버튼
+    // Import panel buttons
     const confirmImportBtn = document.getElementById('confirmImportBtn');
     const cancelImportBtn = document.getElementById('cancelImportBtn');
 
@@ -80,28 +80,28 @@ function setupEventListeners() {
         cancelImportBtn.addEventListener('click', cancelImportPanel);
     }
 
-    // FileStore 선택시 스토어 목록 업데이트
+    // FileStore selection update
     const storeSelectForUpload = document.getElementById('storeSelectForUpload');
     if (storeSelectForUpload) {
         storeSelectForUpload.addEventListener('change', () => {
-            // 선택된 스토어를 표시하기 위한 간단한 처리
+            // Simple handler for store selection
         });
     }
 }
 
 // ============================================================================
-// 탭 관리
+// Tab Management
 // ============================================================================
 function handleTabChange(e) {
     const tabName = e.currentTarget.getAttribute('data-tab');
 
-    // 네비게이션 업데이트
+    // Update navigation
     document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.remove('active');
     });
     e.currentTarget.classList.add('active');
 
-    // 탭 컨텐츠 업데이트
+    // Update tab content
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
     });
@@ -109,18 +109,18 @@ function handleTabChange(e) {
 
     state.currentTab = tabName;
 
-    // 탭별 초기화
+    // Tab-specific initialization
     if (tabName === 'files') {
         loadFiles();
     } else if (tabName === 'stores') {
         loadStores();
     } else if (tabName === 'search') {
-        loadStores(); // 스토어 목록을 라디오 버튼으로 로드
+        loadStores();
     }
 }
 
 // ============================================================================
-// 파일 업로드 (드래그 앤 드롭)
+// File Upload (Drag and Drop)
 // ============================================================================
 function handleDragOver(e) {
     e.preventDefault();
@@ -155,7 +155,7 @@ function handleFiles(files) {
 }
 
 // ============================================================================
-// 파일 업로드 및 자동 임포트
+// File Upload and Auto Import
 // ============================================================================
 async function uploadFile(file, index, total) {
     const formData = new FormData();
@@ -169,13 +169,13 @@ async function uploadFile(file, index, total) {
         <div class="status-icon">⏳</div>
         <div class="status-content">
             <div class="status-title">${fileName}</div>
-            <div class="status-message">업로드 중...</div>
+            <div class="status-message">Uploading...</div>
         </div>
     `;
     uploadStatus.appendChild(statusItem);
 
     try {
-        // 1. 파일 업로드
+        // 1. Upload file
         const uploadResponse = await fetch('/api/files/upload', {
             method: 'POST',
             body: formData
@@ -184,17 +184,17 @@ async function uploadFile(file, index, total) {
         const uploadData = await uploadResponse.json();
 
         if (!uploadData.success) {
-            throw new Error(uploadData.error || '업로드 실패');
+            throw new Error(uploadData.error || 'Upload failed');
         }
 
         const fileId = uploadData.file_id;
 
-        // 업로드 성공 표시
-        statusItem.querySelector('.status-message').textContent = '업로드 완료, 스토어에 임포트 중...';
+        // Show upload success
+        statusItem.querySelector('.status-message').textContent = 'Upload completed, importing to store...';
 
-        // 2. 기본 스토어가 있으면 자동 임포트
+        // 2. Auto import to default store if available
         if (state.stores.length > 0) {
-            const defaultStore = state.stores[0]; // 첫 번째 스토어를 기본으로 사용
+            const defaultStore = state.stores[0];
 
             const importResponse = await fetch(`/api/files/${fileId}/import`, {
                 method: 'POST',
@@ -209,7 +209,7 @@ async function uploadFile(file, index, total) {
             const importData = await importResponse.json();
 
             if (!importData.success) {
-                throw new Error(importData.error || '임포트 실패');
+                throw new Error(importData.error || 'Import failed');
             }
 
             statusItem.classList.add('success');
@@ -217,28 +217,28 @@ async function uploadFile(file, index, total) {
                 <div class="status-icon">✓</div>
                 <div class="status-content">
                     <div class="status-title">${fileName}</div>
-                    <div class="status-message">업로드 및 임포트 완료 (${defaultStore.name})</div>
+                    <div class="status-message">Upload and import completed (${defaultStore.name})</div>
                 </div>
             `;
-            showToast(`${fileName} 업로드 및 임포트 완료`, 'success');
+            showToast(`${fileName} uploaded and imported successfully`, 'success');
         } else {
-            // 스토어가 없으면 업로드만 성공
+            // If no store, just upload
             statusItem.classList.add('success');
             statusItem.innerHTML = `
                 <div class="status-icon">✓</div>
                 <div class="status-content">
                     <div class="status-title">${fileName}</div>
-                    <div class="status-message">업로드 완료 (스토어 없음)</div>
+                    <div class="status-message">Upload completed (no store)</div>
                 </div>
             `;
-            showToast(`${fileName} 업로드 완료 (스토어를 생성하세요)`, 'warning');
+            showToast(`${fileName} uploaded successfully (create a FileStore first)`, 'warning');
         }
 
-        // 모든 파일이 업로드되면 파일 목록 새로고침
+        // Refresh file list when all uploads complete
         if (document.querySelectorAll('.status-item.success').length === total) {
             setTimeout(() => {
                 loadFiles();
-                loadStores(); // 스토어 정보도 새로고침
+                loadStores();
                 uploadProgress.style.display = 'none';
             }, 1000);
         }
@@ -251,12 +251,12 @@ async function uploadFile(file, index, total) {
                 <div class="status-message">${error.message}</div>
             </div>
         `;
-        showToast(`${fileName} 업로드 실패: ${error.message}`, 'error');
+        showToast(`${fileName} upload failed: ${error.message}`, 'error');
     }
 }
 
 // ============================================================================
-// 파일 관리
+// File Management
 // ============================================================================
 async function loadFiles() {
     try {
@@ -274,7 +274,7 @@ async function loadFiles() {
         filesList.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">❌</div>
-                <p>파일 로드 실패: ${error.message}</p>
+                <p>Failed to load files: ${error.message}</p>
             </div>
         `;
     }
@@ -285,7 +285,7 @@ function renderFiles() {
         filesList.innerHTML = `
             <div class="empty-state">
                 <div class="empty-icon">📭</div>
-                <p>업로드된 파일이 없습니다</p>
+                <p>No uploaded files yet</p>
             </div>
         `;
         return;
@@ -294,7 +294,7 @@ function renderFiles() {
     filesList.innerHTML = state.files.map(file => {
         const sizeInMB = (file.size_bytes / (1024 * 1024)).toFixed(2);
         const fileName = file.display_name;
-        const date = new Date(file.create_time).toLocaleDateString('ko-KR');
+        const date = new Date(file.create_time).toLocaleDateString('en-US');
         const fileId = file.file_id;
 
         return `
@@ -302,9 +302,9 @@ function renderFiles() {
                 <div class="file-card-header">
                     <div class="file-icon">${getFileIcon(fileName)}</div>
                     <div class="file-card-actions">
-                        <button title="보기" onclick="previewFile('${fileId}', '${fileName}')">👁️</button>
-                        <button title="FileStore로 옮기기" onclick="showImportPanel('${fileId}', '${fileName}')">📤</button>
-                        <button title="삭제" onclick="deleteFile('${fileId}', '${fileName}')">🗑️</button>
+                        <button title="Preview" onclick="previewFile('${fileId}', '${fileName}')">👁️</button>
+                        <button title="Move to FileStore" onclick="showImportPanel('${fileId}', '${fileName}')">📤</button>
+                        <button title="Delete" onclick="deleteFile('${fileId}', '${fileName}')">🗑️</button>
                     </div>
                 </div>
                 <div class="file-name" title="${fileName}">${fileName}</div>
@@ -337,7 +337,7 @@ function getFileIcon(fileName) {
 }
 
 async function deleteFile(fileId, fileName) {
-    if (!confirm(`"${fileName}"을(를) 정말 삭제하시겠습니까?`)) {
+    if (!confirm(`Delete "${fileName}"?`)) {
         return;
     }
 
@@ -349,50 +349,45 @@ async function deleteFile(fileId, fileName) {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`${fileName} 삭제 완료`, 'success');
+            showToast(`${fileName} deleted successfully`, 'success');
             loadFiles();
-            loadStores(); // 스토어 정보도 새로고침
+            loadStores();
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
-        showToast(`삭제 실패: ${error.message}`, 'error');
+        showToast(`Delete failed: ${error.message}`, 'error');
     }
 }
 
-// 파일 미리보기
+// File preview
 async function previewFile(fileId, fileName) {
     try {
-        // Remove 'files/' prefix if it exists
         const cleanFileId = fileId.replace(/^files\//, '');
         const response = await fetch(`/api/files/${cleanFileId}/preview`);
         const data = await response.json();
 
         if (!data.success) {
-            showToast(`미리보기 불가: ${data.error}`, 'error');
+            showToast(`Preview unavailable: ${data.error}`, 'error');
             return;
         }
 
-        // 파일 정보 모달 표시 또는 새 창에서 열기
         if (data.mime_type?.startsWith('application/pdf')) {
-            // PDF는 새 창에서 열기
             window.open(data.uri, '_blank');
         } else if (data.mime_type?.startsWith('text/')) {
-            // 텍스트는 모달에서 보기
-            alert(`파일: ${fileName}\n크기: ${(data.size_bytes / 1024 / 1024).toFixed(2)} MB\n\n파일 정보: ${data.uri}`);
+            alert(`File: ${fileName}\nSize: ${(data.size_bytes / 1024 / 1024).toFixed(2)} MB\n\nFile info: ${data.uri}`);
         } else {
-            // 다른 파일은 직접 링크 제공
             window.open(data.uri, '_blank');
         }
 
-        showToast(`${fileName} 미리보기 열기`, 'success');
+        showToast(`Opening ${fileName} preview`, 'success');
     } catch (error) {
-        showToast(`미리보기 오류: ${error.message}`, 'error');
+        showToast(`Preview error: ${error.message}`, 'error');
     }
 }
 
 // ============================================================================
-// FileSearchStore 관리
+// FileSearchStore Management
 // ============================================================================
 async function loadStores() {
     try {
@@ -403,7 +398,7 @@ async function loadStores() {
             state.stores = data.stores;
             renderStores();
             renderStoresForSearch();
-            updateStoreSelects(); // FileStore 선택 드롭다운 업데이트
+            updateStoreSelects();
         } else {
             throw new Error(data.error);
         }
@@ -414,7 +409,7 @@ async function loadStores() {
             storesContainer.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-icon">❌</div>
-                    <p>스토어 로드 실패: ${error.message}</p>
+                    <p>Failed to load stores: ${error.message}</p>
                 </div>
             `;
         }
@@ -422,11 +417,10 @@ async function loadStores() {
 }
 
 function updateStoreSelects() {
-    // FileStore 직접 업로드 선택
     const storeSelectForUpload = document.getElementById('storeSelectForUpload');
     if (storeSelectForUpload) {
-        const selectedValue = storeSelectForUpload.value; // 현재 선택값 유지
-        storeSelectForUpload.innerHTML = '<option value="">FileStore 선택...</option>';
+        const selectedValue = storeSelectForUpload.value;
+        storeSelectForUpload.innerHTML = '<option value="">Select FileStore...</option>';
 
         state.stores.forEach(store => {
             const option = document.createElement('option');
@@ -435,7 +429,6 @@ function updateStoreSelects() {
             storeSelectForUpload.appendChild(option);
         });
 
-        // 이전 선택값 복원
         if (selectedValue) {
             storeSelectForUpload.value = selectedValue;
         }
@@ -449,13 +442,13 @@ function renderStores() {
     if (state.stores.length === 0) {
         storesContainer.innerHTML = `
             <div class="create-store-form">
-                <h3>새 FileSearchStore 생성</h3>
-                <input type="text" id="newStoreName" placeholder="스토어 이름 (예: 문서 스토어)" class="input-field">
-                <button class="btn btn-primary" onclick="createStore()">생성</button>
+                <h3>Create New FileSearchStore</h3>
+                <input type="text" id="newStoreName" placeholder="Store name (e.g., Document Store)" class="input-field">
+                <button class="btn btn-primary" onclick="createStore()">Create</button>
             </div>
             <div class="empty-state">
                 <div class="empty-icon">💾</div>
-                <p>생성된 FileSearchStore가 없습니다</p>
+                <p>No FileSearchStores created yet</p>
             </div>
         `;
         return;
@@ -467,35 +460,35 @@ function renderStores() {
         const failedCount = store.failed_documents_count || 0;
         const totalSize = store.size_bytes || 0;
         const sizeInMB = (totalSize / (1024 * 1024)).toFixed(2);
-        const createdDate = new Date(store.create_time).toLocaleDateString('ko-KR');
+        const createdDate = new Date(store.create_time).toLocaleDateString('en-US');
 
         return `
             <div class="store-card" onclick="showStoreDocuments('${store.store_name}', '${store.display_name}')">
                 <div class="store-header">
                     <h3>${store.display_name}</h3>
-                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteStore('${store.store_name}', '${store.display_name}')">삭제</button>
+                    <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteStore('${store.store_name}', '${store.display_name}')">Delete</button>
                 </div>
                 <div class="store-info">
                     <div class="store-stat">
-                        <span class="store-label">활성 문서:</span>
-                        <span class="store-value file-count-${store.store_name.replace(/\//g, '-')}">${activeCount}개</span>
+                        <span class="store-label">Active Documents:</span>
+                        <span class="store-value file-count-${store.store_name.replace(/\//g, '-')}">${activeCount}</span>
                     </div>
                     <div class="store-stat">
-                        <span class="store-label">처리 중:</span>
-                        <span class="store-value">${pendingCount}개</span>
+                        <span class="store-label">Processing:</span>
+                        <span class="store-value">${pendingCount}</span>
                     </div>
                     ${failedCount > 0 ? `
                     <div class="store-stat">
-                        <span class="store-label">실패:</span>
-                        <span class="store-value error">${failedCount}개</span>
+                        <span class="store-label">Failed:</span>
+                        <span class="store-value error">${failedCount}</span>
                     </div>
                     ` : ''}
                     <div class="store-stat">
-                        <span class="store-label">용량:</span>
+                        <span class="store-label">Storage:</span>
                         <span class="store-value">${sizeInMB} MB</span>
                     </div>
                     <div class="store-stat">
-                        <span class="store-label">생성일:</span>
+                        <span class="store-label">Created:</span>
                         <span class="store-value">${createdDate}</span>
                     </div>
                     <div class="store-stat">
@@ -509,16 +502,15 @@ function renderStores() {
 
     storesContainer.innerHTML = `
         <div class="create-store-form">
-            <h3>새 FileSearchStore 생성</h3>
-            <input type="text" id="newStoreName" placeholder="스토어 이름 (예: 문서 스토어)" class="input-field">
-            <button class="btn btn-primary" onclick="createStore()">생성</button>
+            <h3>Create New FileSearchStore</h3>
+            <input type="text" id="newStoreName" placeholder="Store name (e.g., Document Store)" class="input-field">
+            <button class="btn btn-primary" onclick="createStore()">Create</button>
         </div>
         <div class="stores-grid">
             ${storeCards}
         </div>
     `;
 
-    // 통계 업데이트
     updateStats();
 }
 
@@ -527,11 +519,9 @@ function updateStats() {
     const totalSizeElem = document.getElementById('totalSize');
 
     if (totalFilesElem && totalSizeElem) {
-        // FileStore의 활성 문서 수 합계
         const totalActiveDocuments = state.stores.reduce((sum, s) => sum + (s.active_documents_count || 0), 0);
         totalFilesElem.textContent = totalActiveDocuments;
 
-        // FileStore의 총 용량
         const totalBytes = state.stores.reduce((sum, s) => sum + (s.size_bytes || 0), 0);
         const totalSize = (totalBytes / (1024 * 1024)).toFixed(2);
         totalSizeElem.textContent = totalSize + ' MB';
@@ -543,7 +533,7 @@ async function createStore() {
     const name = nameInput.value.trim();
 
     if (!name) {
-        showToast('스토어 이름을 입력하세요', 'warning');
+        showToast('Please enter a store name', 'warning');
         return;
     }
 
@@ -559,19 +549,19 @@ async function createStore() {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`${name} 스토어 생성 완료`, 'success');
+            showToast(`FileStore "${name}" created successfully`, 'success');
             nameInput.value = '';
             loadStores();
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
-        showToast(`스토어 생성 실패: ${error.message}`, 'error');
+        showToast(`Failed to create store: ${error.message}`, 'error');
     }
 }
 
 async function deleteStore(storeId, storeName) {
-    if (!confirm(`"${storeName}" 스토어를 정말 삭제하시겠습니까?\n스토어를 삭제해도 파일은 유지됩니다.`)) {
+    if (!confirm(`Delete FileStore "${storeName}"?\nFiles will be preserved.`)) {
         return;
     }
 
@@ -583,18 +573,18 @@ async function deleteStore(storeId, storeName) {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`${storeName} 스토어 삭제 완료`, 'success');
+            showToast(`FileStore "${storeName}" deleted successfully`, 'success');
             loadStores();
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
-        showToast(`스토어 삭제 실패: ${error.message}`, 'error');
+        showToast(`Failed to delete store: ${error.message}`, 'error');
     }
 }
 
 // ============================================================================
-// 검색 기능
+// Search Functionality
 // ============================================================================
 function renderStoresForSearch() {
     const container = fileCheckboxList;
@@ -603,8 +593,8 @@ function renderStoresForSearch() {
     if (state.stores.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <p>생성된 FileSearchStore가 없습니다</p>
-                <small>FileStore 탭에서 스토어를 생성하세요</small>
+                <p>No FileSearchStores available</p>
+                <small>Create a store in the FileStore tab</small>
             </div>
         `;
         return;
@@ -618,24 +608,22 @@ function renderStoresForSearch() {
             <label class="checkbox-item">
                 <input type="radio" name="store" value="${store.store_name}" class="store-radio" ${checked}>
                 <span class="checkbox-label">${store.display_name}</span>
-                <span class="checkbox-size">${fileCount}개 문서</span>
+                <span class="checkbox-size">${fileCount} documents</span>
             </label>
         `;
     }).join('');
 
     container.innerHTML = `
         <div style="margin-bottom: 10px;">
-            <strong>검색할 FileSearchStore 선택:</strong>
+            <strong>Select FileStore to Search:</strong>
         </div>
         ${storeRadios}
     `;
 
-    // 첫 번째 스토어를 기본 선택
     if (state.stores.length > 0) {
         state.selectedStoreId = state.stores[0].store_name;
     }
 
-    // 라디오 버튼 변경 이벤트
     document.querySelectorAll('.store-radio').forEach(radio => {
         radio.addEventListener('change', (e) => {
             state.selectedStoreId = e.target.value;
@@ -644,22 +632,20 @@ function renderStoresForSearch() {
 }
 
 function toggleSelectAll() {
-    // 라디오 버튼 방식으로 변경되었으므로 이 함수는 사용되지 않음
-    // 하지만 HTML에 버튼이 있을 수 있으므로 메시지만 표시
-    showToast('스토어는 하나만 선택할 수 있습니다', 'info');
+    showToast('Only one store can be selected', 'info');
 }
 
 async function performSearch() {
     const selectedRadio = document.querySelector('.store-radio:checked');
 
     if (!selectedRadio) {
-        showToast('검색할 FileSearchStore를 선택하세요', 'warning');
+        showToast('Please select a FileStore to search', 'warning');
         return;
     }
 
     const query = searchQuery.value.trim();
     if (!query) {
-        showToast('검색 질문을 입력하세요', 'warning');
+        showToast('Please enter a search question', 'warning');
         return;
     }
 
@@ -686,12 +672,12 @@ async function performSearch() {
         if (data.success) {
             renderSearchResult(data.result, data.citations);
             searchResult.style.display = 'block';
-            showToast('검색 완료', 'success');
+            showToast('Search completed', 'success');
         } else {
             throw new Error(data.error);
         }
     } catch (error) {
-        showToast(`검색 실패: ${error.message}`, 'error');
+        showToast(`Search failed: ${error.message}`, 'error');
     } finally {
         searchLoading.style.display = 'none';
     }
@@ -703,7 +689,7 @@ function renderSearchResult(result, citations) {
     if (citations && citations.length > 0) {
         html += `
             <div class="citations-section">
-                <h4>참조 자료 (Citations)</h4>
+                <h4>Citations</h4>
                 <div class="citations-list">
         `;
 
@@ -712,8 +698,8 @@ function renderSearchResult(result, citations) {
                 <div class="citation-item">
                     <div class="citation-number">[${index + 1}]</div>
                     <div class="citation-content">
-                        <div class="citation-text">${citation.content || citation.text || '내용 없음'}</div>
-                        ${citation.source ? `<div class="citation-source">출처: ${citation.source}</div>` : ''}
+                        <div class="citation-text">${citation.content || citation.text || 'No content'}</div>
+                        ${citation.source ? `<div class="citation-source">Source: ${citation.source}</div>` : ''}
                     </div>
                 </div>
             `;
@@ -729,11 +715,9 @@ function renderSearchResult(result, citations) {
 }
 
 // ============================================================================
-// ============================================================================
-// FileStore 직접 업로드
+// Direct FileStore Upload
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    // FileStore 업로드 영역 이벤트
     const uploadToStoreArea = document.getElementById('uploadToStoreArea');
     const fileInputForStore = document.getElementById('fileInputForStore');
 
@@ -753,7 +737,7 @@ function handleDropForStore(e) {
     if (files.length > 0) {
         const store = document.getElementById('storeSelectForUpload').value;
         if (!store) {
-            showToast('FileStore를 먼저 선택하세요', 'error');
+            showToast('Please select a FileStore first', 'error');
             return;
         }
 
@@ -766,7 +750,7 @@ function handleDropForStore(e) {
 function handleFileSelectForStore(e) {
     const store = document.getElementById('storeSelectForUpload').value;
     if (!store) {
-        showToast('FileStore를 먼저 선택하세요', 'error');
+        showToast('Please select a FileStore first', 'error');
         return;
     }
 
@@ -776,12 +760,11 @@ function handleFileSelectForStore(e) {
 }
 
 async function uploadToFileSearchStore(file, storeName) {
-    // 파일 검증
     const validExtensions = ['pdf', 'txt', 'doc', 'docx', 'xlsx', 'xls', 'ppt', 'pptx', 'csv', 'json', 'xml', 'html'];
     const ext = file.name.split('.').pop().toLowerCase();
 
     if (!validExtensions.includes(ext)) {
-        showToast(`지원하지 않는 파일 형식입니다: ${file.name}`, 'error');
+        showToast(`Unsupported file format: ${file.name}`, 'error');
         return;
     }
 
@@ -790,7 +773,7 @@ async function uploadToFileSearchStore(file, storeName) {
     const progressFill = document.getElementById('progressFillStore');
     const uploadFileName = document.getElementById('uploadToStoreFileName');
 
-    uploadFileName.textContent = `${file.name} 업로드 중...`;
+    uploadFileName.textContent = `Uploading ${file.name}...`;
     uploadProgress.style.display = 'block';
     uploadStatus.innerHTML = '';
 
@@ -811,10 +794,9 @@ async function uploadToFileSearchStore(file, storeName) {
         xhr.addEventListener('load', () => {
             if (xhr.status === 201) {
                 const response = JSON.parse(xhr.responseText);
-                showToast(`${file.name}이(가) FileStore에 업로드되었습니다`, 'success');
-                uploadStatus.innerHTML = `<div class="success-message">✅ ${file.name} 업로드 완료</div>`;
+                showToast(`${file.name} uploaded to FileStore successfully`, 'success');
+                uploadStatus.innerHTML = `<div class="success-message">✅ ${file.name} upload completed</div>`;
 
-                // 스토어 목록 새로고침
                 setTimeout(() => {
                     loadStores();
                     uploadProgress.style.display = 'none';
@@ -822,27 +804,27 @@ async function uploadToFileSearchStore(file, storeName) {
                 }, 2000);
             } else {
                 const error = JSON.parse(xhr.responseText);
-                showToast(`업로드 실패: ${error.error || 'Unknown error'}`, 'error');
-                uploadStatus.innerHTML = `<div class="error-message">❌ 업로드 실패: ${error.error}</div>`;
+                showToast(`Upload failed: ${error.error || 'Unknown error'}`, 'error');
+                uploadStatus.innerHTML = `<div class="error-message">❌ Upload failed: ${error.error}</div>`;
             }
         });
 
         xhr.addEventListener('error', () => {
-            showToast('업로드 중 오류가 발생했습니다', 'error');
-            uploadStatus.innerHTML = '<div class="error-message">❌ 업로드 중 오류 발생</div>';
+            showToast('An error occurred during upload', 'error');
+            uploadStatus.innerHTML = '<div class="error-message">❌ Upload error</div>';
         });
 
         xhr.open('POST', '/api/stores/upload');
         xhr.send(formData);
 
     } catch (error) {
-        showToast(`에러: ${error.message}`, 'error');
-        uploadStatus.innerHTML = `<div class="error-message">❌ 에러: ${error.message}</div>`;
+        showToast(`Error: ${error.message}`, 'error');
+        uploadStatus.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
     }
 }
 
 // ============================================================================
-// FileStore로 파일 옮기기
+// Move Files to FileStore
 // ============================================================================
 let selectedFileForImport = null;
 
@@ -855,9 +837,8 @@ function showImportPanel(fileId, fileName) {
     const importPanel = document.getElementById('importPanel');
     importPanel.style.display = 'block';
 
-    // 스토어 목록 로드
     const storeSelect = document.getElementById('storeSelectForImport');
-    storeSelect.innerHTML = '<option value="">FileStore 선택...</option>';
+    storeSelect.innerHTML = '<option value="">Select FileStore...</option>';
 
     state.stores.forEach(store => {
         const option = document.createElement('option');
@@ -874,18 +855,18 @@ function cancelImportPanel() {
 
 async function confirmImportFile() {
     if (!selectedFileForImport) {
-        showToast('선택한 파일이 없습니다', 'error');
+        showToast('No file selected', 'error');
         return;
     }
 
     const storeName = document.getElementById('storeSelectForImport').value;
     if (!storeName) {
-        showToast('FileStore를 선택하세요', 'error');
+        showToast('Please select a FileStore', 'error');
         return;
     }
 
     const importStatus = document.getElementById('importStatus');
-    importStatus.innerHTML = '<div class="loading" style="display: flex; align-items: center; gap: 10px;"><div class="spinner"></div><span>파일을 옮기는 중...</span></div>';
+    importStatus.innerHTML = '<div class="loading" style="display: flex; align-items: center; gap: 10px;"><div class="spinner"></div><span>Moving file...</span></div>';
 
     try {
         const response = await fetch('/api/files/import', {
@@ -902,8 +883,8 @@ async function confirmImportFile() {
         const data = await response.json();
 
         if (data.success) {
-            showToast(`${selectedFileForImport.display_name}이(가) FileStore로 옮겨졌습니다`, 'success');
-            importStatus.innerHTML = `<div class="success-message">✅ 옮기기 완료</div>`;
+            showToast(`${selectedFileForImport.display_name} moved to FileStore successfully`, 'success');
+            importStatus.innerHTML = `<div class="success-message">✅ Move completed</div>`;
 
             setTimeout(() => {
                 document.getElementById('importPanel').style.display = 'none';
@@ -911,17 +892,17 @@ async function confirmImportFile() {
                 selectedFileForImport = null;
             }, 2000);
         } else {
-            showToast(`옮기기 실패: ${data.error || 'Unknown error'}`, 'error');
-            importStatus.innerHTML = `<div class="error-message">❌ 실패: ${data.error}</div>`;
+            showToast(`Move failed: ${data.error || 'Unknown error'}`, 'error');
+            importStatus.innerHTML = `<div class="error-message">❌ Failed: ${data.error}</div>`;
         }
     } catch (error) {
-        showToast(`에러: ${error.message}`, 'error');
-        importStatus.innerHTML = `<div class="error-message">❌ 에러: ${error.message}</div>`;
+        showToast(`Error: ${error.message}`, 'error');
+        importStatus.innerHTML = `<div class="error-message">❌ Error: ${error.message}</div>`;
     }
 }
 
 // ============================================================================
-// FileStore 문서 조회
+// View FileStore Documents
 // ============================================================================
 async function showStoreDocuments(storeName, displayName) {
     const storesContainer = document.getElementById('storesList');
@@ -934,17 +915,15 @@ async function showStoreDocuments(storeName, displayName) {
             const documents = data.documents || [];
             const documentCount = data.count || 0;
 
-            // Store 카드 업데이트 - 파일 수 표시
             const fileCountElement = document.querySelector(`.file-count-${storeName.replace(/\//g, '-')}`);
             if (fileCountElement) {
-                fileCountElement.textContent = `${documentCount}개`;
+                fileCountElement.textContent = `${documentCount}`;
             }
 
-            // 문서 목록 표시
             const documentListHtml = documents.length > 0
                 ? `
                     <div class="store-documents">
-                        <h4>저장된 문서 (${documentCount}개)</h4>
+                        <h4>Stored Documents (${documentCount})</h4>
                         <ul class="document-list">
                             ${documents.map(doc => `
                                 <li class="document-item">
@@ -955,28 +934,27 @@ async function showStoreDocuments(storeName, displayName) {
                         </ul>
                     </div>
                 `
-                : '<p class="empty-message">저장된 문서가 없습니다</p>';
+                : '<p class="empty-message">No stored documents</p>';
 
-            // Store 카드를 확장된 뷰로 변경
             storesContainer.innerHTML = `
                 <div class="store-detail-view">
-                    <button class="btn btn-secondary" onclick="loadStores()">← 돌아가기</button>
+                    <button class="btn btn-secondary" onclick="loadStores()">← Back</button>
                     <h3>${displayName}</h3>
                     ${documentListHtml}
                 </div>
             `;
 
-            showToast(`${displayName}의 문서 목록을 불러왔습니다`, 'success');
+            showToast(`Loaded documents for ${displayName}`, 'success');
         } else {
-            showToast(`문서 목록 불러오기 실패: ${data.error}`, 'error');
+            showToast(`Failed to load documents: ${data.error}`, 'error');
         }
     } catch (error) {
-        showToast(`에러: ${error.message}`, 'error');
+        showToast(`Error: ${error.message}`, 'error');
     }
 }
 
 // ============================================================================
-// 유틸리티
+// Utilities
 // ============================================================================
 function showToast(message, type = 'info') {
     toast.textContent = message;

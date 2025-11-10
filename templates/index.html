@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gemini File Search - 현대적인 파일 검색 플랫폼</title>
+    <title>Gemini File Search - Modern File Search Platform</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -23,11 +23,11 @@
             <nav class="sidebar-nav">
                 <button class="nav-item active" data-tab="upload">
                     <span class="icon">📤</span>
-                    <span class="label">파일 업로드</span>
+                    <span class="label">File Upload</span>
                 </button>
                 <button class="nav-item" data-tab="files">
                     <span class="icon">📁</span>
-                    <span class="label">내 파일</span>
+                    <span class="label">My Files</span>
                 </button>
                 <button class="nav-item" data-tab="stores">
                     <span class="icon">💾</span>
@@ -35,7 +35,7 @@
                 </button>
                 <button class="nav-item" data-tab="search">
                     <span class="icon">🔍</span>
-                    <span class="label">Chat 검색</span>
+                    <span class="label">Chat Search</span>
                 </button>
             </nav>
 
@@ -46,17 +46,17 @@
 
         <!-- 메인 컨텐츠 -->
         <main class="main-content">
-            <!-- 파일 업로드 탭 -->
+            <!-- File Upload Tab -->
             <section id="upload" class="tab-content active">
                 <div class="section-header">
-                    <h1>파일 업로드</h1>
-                    <p>로컬 PC의 파일을 Gemini에 업로드하세요</p>
+                    <h1>File Upload</h1>
+                    <p>Upload files from your computer to Gemini</p>
                 </div>
 
                 <div class="upload-area" id="uploadArea">
                     <div class="upload-icon">📄</div>
-                    <h3>파일을 여기에 드래그하거나 클릭하세요</h3>
-                    <p>지원 형식: PDF, Word, Excel, PPT, TXT, CSV 등</p>
+                    <h3>Drag files here or click to select</h3>
+                    <p>Supported formats: PDF, Word, Excel, PPT, TXT, CSV, and more</p>
                     <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.csv,.json,.xml,.html" multiple>
                 </div>
 
@@ -72,25 +72,25 @@
                 <div id="uploadStatus" class="upload-status"></div>
             </section>
 
-            <!-- 내 파일 탭 -->
+            <!-- My Files Tab -->
             <section id="files" class="tab-content">
                 <div class="section-header">
-                    <h1>업로드된 파일</h1>
-                    <p>현재 저장소에 있는 모든 파일을 확인하세요</p>
-                    <button class="btn btn-secondary" id="refreshFilesBtn">새로고침</button>
+                    <h1>Uploaded Files</h1>
+                    <p>View all files in your temporary storage</p>
+                    <button class="btn btn-secondary" id="refreshFilesBtn">Refresh</button>
                 </div>
 
-                <!-- FileStore로 옮기기 패널 -->
+                <!-- Import to FileStore Panel -->
                 <div id="importPanel" class="import-panel" style="display: none;">
                     <div class="import-header">
-                        <h3>선택한 파일을 FileStore로 옮기기</h3>
-                        <button class="btn btn-secondary btn-sm" id="cancelImportBtn">취소</button>
+                        <h3>Move Selected Files to FileStore</h3>
+                        <button class="btn btn-secondary btn-sm" id="cancelImportBtn">Cancel</button>
                     </div>
                     <div class="import-controls">
                         <select id="storeSelectForImport" class="input-field">
-                            <option value="">FileStore 선택...</option>
+                            <option value="">Select FileStore...</option>
                         </select>
-                        <button class="btn btn-primary" id="confirmImportBtn">옮기기</button>
+                        <button class="btn btn-primary" id="confirmImportBtn">Move</button>
                     </div>
                     <div id="importStatus" class="upload-status"></div>
                 </div>
@@ -98,30 +98,30 @@
                 <div id="filesList" class="files-grid">
                     <div class="empty-state">
                         <div class="empty-icon">📭</div>
-                        <p>업로드된 파일이 없습니다</p>
+                        <p>No uploaded files yet</p>
                     </div>
                 </div>
             </section>
 
-            <!-- FileStore 탭 -->
+            <!-- FileStore Tab -->
             <section id="stores" class="tab-content">
                 <div class="section-header">
-                    <h1>FileStore 관리</h1>
-                    <p>현재 프로젝트의 FileStore 정보</p>
+                    <h1>FileStore Management</h1>
+                    <p>Manage your FileStores and persistent document storage</p>
                 </div>
 
-                <!-- FileStore에 직접 업로드 -->
+                <!-- Direct Upload to FileStore -->
                 <div class="upload-to-store-section">
                     <div class="subsection-header">
-                        <h3>FileStore에 파일 업로드</h3>
+                        <h3>Upload Files to FileStore</h3>
                     </div>
                     <div class="upload-to-store-form">
                         <select id="storeSelectForUpload" class="input-field">
-                            <option value="">FileStore 선택...</option>
+                            <option value="">Select FileStore...</option>
                         </select>
                         <div class="upload-area-small" id="uploadToStoreArea">
                             <div class="upload-icon">📄</div>
-                            <p>파일을 드래그하거나 클릭하세요</p>
+                            <p>Drag files here or click to select</p>
                             <input type="file" id="fileInputForStore" style="display: none;" accept=".pdf,.txt,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.csv,.json,.xml,.html" multiple>
                         </div>
                         <div id="uploadToStoreProgress" class="upload-progress" style="display: none;">
@@ -139,64 +139,64 @@
                 <div id="storesList" class="stores-container">
                     <div class="empty-state">
                         <div class="empty-icon">💾</div>
-                        <p>FileStore 정보를 불러오는 중...</p>
+                        <p>Loading FileStores...</p>
                     </div>
                 </div>
 
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">전체 파일</div>
+                        <div class="stat-label">Total Documents</div>
                         <div class="stat-value" id="totalFiles">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">전체 용량</div>
+                        <div class="stat-label">Total Storage</div>
                         <div class="stat-value" id="totalSize">0 B</div>
                     </div>
                 </div>
             </section>
 
-            <!-- Chat 검색 탭 -->
+            <!-- Chat Search Tab -->
             <section id="search" class="tab-content">
                 <div class="section-header">
-                    <h1>Chat 검색</h1>
-                    <p>업로드된 파일에서 자연스러운 질문으로 검색하세요</p>
+                    <h1>Chat Search</h1>
+                    <p>Search your uploaded files with natural language questions</p>
                 </div>
 
                 <div class="search-container">
                     <div class="search-panel">
-                        <h3>검색할 파일 선택</h3>
+                        <h3>Select FileStore to Search</h3>
                         <div id="fileCheckboxList" class="file-checkbox-list">
                             <div class="empty-state">
-                                <p>업로드된 파일이 없습니다</p>
+                                <p>No FileStores available</p>
                             </div>
                         </div>
-                        <button class="btn btn-primary" id="selectAllBtn">전체 선택</button>
+                        <button class="btn btn-primary" id="selectAllBtn">Select All</button>
                     </div>
 
                     <div class="query-panel">
-                        <h3>질문하기</h3>
-                        <textarea id="searchQuery" placeholder="여기에 질문을 입력하세요. 예: 이 문서의 주요 내용이 무엇인가?" rows="6"></textarea>
-                        <button class="btn btn-primary" id="searchBtn" style="width: 100%; margin-top: 10px;">검색</button>
+                        <h3>Ask a Question</h3>
+                        <textarea id="searchQuery" placeholder="Enter your question here. Example: What are the main topics in this document?" rows="6"></textarea>
+                        <button class="btn btn-primary" id="searchBtn" style="width: 100%; margin-top: 10px;">Search</button>
                     </div>
                 </div>
 
                 <div id="searchResult" class="search-result" style="display: none;">
                     <div class="result-header">
-                        <h3>검색 결과</h3>
-                        <button class="btn btn-secondary btn-sm" id="closeResultBtn">닫기</button>
+                        <h3>Search Results</h3>
+                        <button class="btn btn-secondary btn-sm" id="closeResultBtn">Close</button>
                     </div>
                     <div id="resultContent" class="result-content"></div>
                 </div>
 
                 <div id="searchLoading" class="loading" style="display: none;">
                     <div class="spinner"></div>
-                    <p>검색 중...</p>
+                    <p>Searching...</p>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- 토스트 알림 -->
+    <!-- Toast Notifications -->
     <div id="toast" class="toast"></div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
