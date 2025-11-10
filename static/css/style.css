@@ -417,6 +417,106 @@ body {
     margin-bottom: 24px;
 }
 
+.create-store-form {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.create-store-form h3 {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: var(--text-primary);
+}
+
+.input-field {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.stores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 16px;
+}
+
+.store-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 20px;
+    transition: var(--transition);
+}
+
+.store-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.store-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.store-header h3 {
+    font-size: 16px;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
+.store-info {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.store-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
+
+.store-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.store-value {
+    color: var(--text-primary);
+}
+
+.store-id {
+    font-family: 'Courier New', monospace;
+    font-size: 11px;
+    color: var(--text-tertiary);
+    word-break: break-all;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -491,10 +591,12 @@ body {
     background-color: var(--bg-tertiary);
 }
 
-.checkbox-item input[type="checkbox"] {
+.checkbox-item input[type="checkbox"],
+.checkbox-item input[type="radio"] {
     cursor: pointer;
     width: 16px;
     height: 16px;
+    flex-shrink: 0;
 }
 
 .checkbox-label {
@@ -551,10 +653,68 @@ body {
 .result-content {
     color: var(--text-primary);
     line-height: 1.6;
-    max-height: 400px;
+    max-height: 600px;
     overflow-y: auto;
+}
+
+.result-text {
     white-space: pre-wrap;
     word-wrap: break-word;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.citations-section {
+    margin-top: 24px;
+}
+
+.citations-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.citations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.citation-item {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background-color: var(--bg-secondary);
+    border-radius: 6px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.citation-number {
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.citation-content {
+    flex: 1;
+}
+
+.citation-text {
+    font-size: 13px;
+    color: var(--text-primary);
+    line-height: 1.5;
+    margin-bottom: 6px;
+}
+
+.citation-source {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 /* 로딩 상태 */

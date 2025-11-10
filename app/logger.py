@@ -9,7 +9,13 @@ log_dir.mkdir(exist_ok=True)
 
 # 로거 설정
 logger = logging.getLogger('gemini_app')
+
+# 이미 핸들러가 있으면 제거 (중복 방지)
+if logger.hasHandlers():
+    logger.handlers.clear()
+
 logger.setLevel(logging.DEBUG)
+logger.propagate = False  # 부모 로거로 전파 방지
 
 # 파일 핸들러 (회전식 로그)
 log_file = log_dir / 'app.log'
