@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini File Search - 현대적인 파일 검색 플랫폼</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 사이드바 -->
+        <aside class="sidebar">
+            <div class="logo-section">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2"/>
+                        <path d="M16 10V22M10 16H22" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>Gemini Search</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-tab="upload">
+                    <span class="icon">📤</span>
+                    <span class="label">파일 업로드</span>
+                </button>
+                <button class="nav-item" data-tab="files">
+                    <span class="icon">📁</span>
+                    <span class="label">내 파일</span>
+                </button>
+                <button class="nav-item" data-tab="stores">
+                    <span class="icon">💾</span>
+                    <span class="label">FileStore</span>
+                </button>
+                <button class="nav-item" data-tab="search">
+                    <span class="icon">🔍</span>
+                    <span class="label">Chat 검색</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+            </div>
+        </aside>
+
+        <!-- 메인 컨텐츠 -->
+        <main class="main-content">
+            <!-- 파일 업로드 탭 -->
+            <section id="upload" class="tab-content active">
+                <div class="section-header">
+                    <h1>파일 업로드</h1>
+                    <p>로컬 PC의 파일을 Gemini에 업로드하세요</p>
+                </div>
+
+                <div class="upload-area" id="uploadArea">
+                    <div class="upload-icon">📄</div>
+                    <h3>파일을 여기에 드래그하거나 클릭하세요</h3>
+                    <p>지원 형식: PDF, Word, Excel, PPT, TXT, CSV 등</p>
+                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.csv,.json,.xml,.html" multiple>
+                </div>
+
+                <div id="uploadProgress" class="upload-progress" style="display: none;">
+                    <div class="progress-item">
+                        <span id="uploadFileName"></span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="uploadStatus" class="upload-status"></div>
+            </section>
+
+            <!-- 내 파일 탭 -->
+            <section id="files" class="tab-content">
+                <div class="section-header">
+                    <h1>업로드된 파일</h1>
+                    <p>현재 저장소에 있는 모든 파일을 확인하세요</p>
+                    <button class="btn btn-secondary" id="refreshFilesBtn">새로고침</button>
+                </div>
+
+                <div id="filesList" class="files-grid">
+                    <div class="empty-state">
+                        <div class="empty-icon">📭</div>
+                        <p>업로드된 파일이 없습니다</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FileStore 탭 -->
+            <section id="stores" class="tab-content">
+                <div class="section-header">
+                    <h1>FileStore 관리</h1>
+                    <p>현재 프로젝트의 FileStore 정보</p>
+                </div>
+
+                <div id="storesList" class="stores-container">
+                    <div class="empty-state">
+                        <div class="empty-icon">💾</div>
+                        <p>FileStore 정보를 불러오는 중...</p>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">전체 파일</div>
+                        <div class="stat-value" id="totalFiles">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">전체 용량</div>
+                        <div class="stat-value" id="totalSize">0 B</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Chat 검색 탭 -->
+            <section id="search" class="tab-content">
+                <div class="section-header">
+                    <h1>Chat 검색</h1>
+                    <p>업로드된 파일에서 자연스러운 질문으로 검색하세요</p>
+                </div>
+
+                <div class="search-container">
+                    <div class="search-panel">
+                        <h3>검색할 파일 선택</h3>
+                        <div id="fileCheckboxList" class="file-checkbox-list">
+                            <div class="empty-state">
+                                <p>업로드된 파일이 없습니다</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="selectAllBtn">전체 선택</button>
+                    </div>
+
+                    <div class="query-panel">
+                        <h3>질문하기</h3>
+                        <textarea id="searchQuery" placeholder="여기에 질문을 입력하세요. 예: 이 문서의 주요 내용이 무엇인가?" rows="6"></textarea>
+                        <button class="btn btn-primary" id="searchBtn" style="width: 100%; margin-top: 10px;">검색</button>
+                    </div>
+                </div>
+
+                <div id="searchResult" class="search-result" style="display: none;">
+                    <div class="result-header">
+                        <h3>검색 결과</h3>
+                        <button class="btn btn-secondary btn-sm" id="closeResultBtn">닫기</button>
+                    </div>
+                    <div id="resultContent" class="result-content"></div>
+                </div>
+
+                <div id="searchLoading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>검색 중...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 토스트 알림 -->
+    <div id="toast" class="toast"></div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
