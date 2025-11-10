@@ -24,7 +24,7 @@ class GeminiClient:
         self.logger = get_logger()
 
         # Configure the client with API key
-        self.client = genai.Client(api_key=api_key)
+        self.client = genai.Client(api_key=api_key)        
         self.logger.info("GeminiClient initialized successfully")
 
 
@@ -474,15 +474,15 @@ class GeminiClient:
                 contents=query,
                 config=types.GenerateContentConfig(
                     tools=[
-                        dict(
-                            file_search=dict(
+                        types.Tool(
+                            file_search=types.FileSearch(
                                 file_search_store_names=store_names
                             )
                         )
                     ]
                 )
             )
-
+            
             # Extract text from response
             result_text = response.text if hasattr(response, 'text') else str(response)
 
@@ -531,8 +531,8 @@ class GeminiClient:
                 contents=query,
                 config=types.GenerateContentConfig(
                     tools=[
-                        dict(
-                            file_search=dict(
+                        types.Tool(
+                            file_search=types.FileSearch(
                                 file_search_store_names=store_names
                             )
                         )
