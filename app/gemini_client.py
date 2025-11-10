@@ -396,7 +396,7 @@ class GeminiClient:
         query: str,
         store_names: List[str],
         metadata_filter: Optional[Dict[str, Any]] = None,
-        model: str = "gemini-2.0-flash-001"
+        model: str = "gemini-2.5-flash"
     ) -> Dict[str, Any]:
         """
         Search using FileSearch tool with specified stores
@@ -405,7 +405,7 @@ class GeminiClient:
             query: Search query
             store_names: List of FileSearchStore names to search in
             metadata_filter: Optional metadata filter for search
-            model: Model to use for search (default: gemini-2.0-flash-001)
+            model: Model to use for search (default: gemini-2.5-flash)
 
         Returns:
             Dict with success status and search results
@@ -415,19 +415,18 @@ class GeminiClient:
             self.logger.debug(f"Query: {query}")
             self.logger.debug(f"Metadata filter: {metadata_filter}")
 
-            # Create FileSearch tool configuration
-            file_search_tool = types.Tool(
-                file_search=types.FileSearch(
-                    store_names=store_names
-                )
-            )
-
             # Generate content with FileSearch tool
             response = self.client.models.generate_content(
                 model=model,
                 contents=query,
                 config=types.GenerateContentConfig(
-                    tools=[file_search_tool]
+                    tools=[
+                        dict(
+                            file_search=dict(
+                                file_search_store_names=store_names
+                            )
+                        )
+                    ]
                 )
             )
 
@@ -456,7 +455,7 @@ class GeminiClient:
         self,
         query: str,
         store_names: List[str],
-        model: str = "gemini-2.0-flash-001"
+        model: str = "gemini-2.5-flash"
     ) -> Dict[str, Any]:
         """
         Search using grounding with FileSearchStores
@@ -464,7 +463,7 @@ class GeminiClient:
         Args:
             query: Search query
             store_names: List of FileSearchStore names for grounding
-            model: Model to use for search (default: gemini-2.0-flash-001)
+            model: Model to use for search (default: gemini-2.5-flash)
 
         Returns:
             Dict with success status and search results with grounding metadata
@@ -473,20 +472,18 @@ class GeminiClient:
             self.logger.info(f"Searching with grounding in stores: {store_names}")
             self.logger.debug(f"Query: {query}")
 
-            # Create grounding configuration with FileSearchStores
-            grounding_tool = types.Tool(
-                google_search=types.GoogleSearch(),
-                file_search=types.FileSearch(
-                    store_names=store_names
-                )
-            )
-
             # Generate content with grounding
             response = self.client.models.generate_content(
                 model=model,
                 contents=query,
                 config=types.GenerateContentConfig(
-                    tools=[grounding_tool]
+                    tools=[
+                        dict(
+                            file_search=dict(
+                                file_search_store_names=store_names
+                            )
+                        )
+                    ]
                 )
             )
 
