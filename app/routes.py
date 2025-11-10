@@ -1,4 +1,6 @@
 from flask import Blueprint, render_template, request, jsonify, current_app
+from app.logger import get_logger
+logger = get_logger()
 from werkzeug.utils import secure_filename
 import os
 import tempfile
@@ -32,6 +34,13 @@ def get_mime_type(filename):
     return mime_types.get(ext, 'application/octet-stream')
 
 @bp.route('/')
+def index():
+    logger.info(f'인덱스 페이지 요청 - IP: {request.remote_addr}')
+    try:
+        return render_template('index.html')
+    except Exception as e:
+        logger.error(f'인덱스 페이지 렌더링 실패: {str(e)}')
+        return jsonify({'success': False, 'error': str(e)}), 500
 def index():
     return render_template('index.html')
 
