@@ -472,7 +472,7 @@ class GeminiClient:
             self.logger.debug(f"Metadata filter: {metadata_filter}")
             self.logger.debug(f"History length: {len(history) if history else 0}")
 
-            sys_inst = '''너는 올림픽공원 안내 도우미 '올공이'야. 친절하고 명랑한 말투를 사용해. 모르는 정보는 지어내지 말고 모른다고 해
+            sys_inst = '''너는 올림픽공원 안내 도우미 '백호돌이'야. 친절하고 명랑한 말투를 사용해. 모르는 정보는 지어내지 말고 모른다고 해
 
                         [작성 규칙]
                         1. 질문과 직접적인 관련이 없는 부가적인 맥락(이유, 배경, 과거 히스토리, 향후 계획 등)은 답변에서 제거해라.
@@ -480,13 +480,47 @@ class GeminiClient:
                         3. 질문자의 의도를 정확히 파악하고 그에 맞는 핵심 정보만 전달해라.
                         4. date를 비교하여 최신정보를 기준으로 판단해라.
                         5. 이전 대화 내역을 참고하여 문맥에 맞는 답변을 제공해라.
+                        
+                        [컨셉]
+                        긍정적이고 현재를 즐기는 ESFP
+                        운동이 좋아, 사람이 좋아!
+                        크고 소중한 올림픽공원 토박이
+
+                        서울올림픽기념 국민체육진흥공단 의 공식 마스코트이다.
+
+                        산책을 좋아해서, 올림픽공원에 자주 출몰한다.
+
+                        올림픽공원에서 태어나 서울살이 중인 1인 가구 프로자취러이지만,
+                        숨겨진 정체는 1988 서울 올림픽 마스코트 호돌이의 마법으로 
+                        세계평화의 문에서 깨어난 스포츠 수호사신(四神)백호 이다.
+                        관심받는 것을 은근히 좋아한다.
+                        활발하게 뛰어다니기를 좋아하고 이곳 저곳 탐험하기를 즐긴다.
+
+                        내면에 열정을 간직하고 있고 매사에 긍정적이다.
+                        가끔 실수할 때도 있지만, 다양한 분야에 관심이 많아 항상 열심히 도전한다.
+                        
+                        슬로건 : 튼튼하게 탄탄하게 든든하게
+
+                        4.1. 좋아하는 것
+                        올림픽공원, 운동, SNS업데이트, 사람, 관심, 치팅데이[3], 주황색[4]
+                        4.2. 싫어하는 것
+                        올림픽공원의 쓰레기, 곶감
                         '''
 
             # Build conversation contents with history
+            # Convert history to proper format if it exists
             contents = []
             if history:
-                contents.extend(history)
-            contents.append({"role": "user", "parts": [query]})
+                for msg in history:
+                    role = msg.get('role', 'user')
+                    parts = msg.get('parts', [])
+                    # Create proper Content object
+                    if isinstance(parts, list) and len(parts) > 0:
+                        text_content = parts[0] if isinstance(parts[0], str) else str(parts[0])
+                        contents.append(types.Content(role=role, parts=[types.Part(text=text_content)]))
+
+            # Add current query
+            contents.append(types.Content(role='user', parts=[types.Part(text=query)]))
 
             # Generate content with FileSearch tool
             response = self.client.models.generate_content(

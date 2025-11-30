@@ -5,7 +5,8 @@ const state = {
     files: [],
     stores: [],
     selectedStoreId: null,
-    currentTab: 'upload'
+    currentTab: 'upload',
+    conversationHistory: []
 };
 
 // ============================================================================
@@ -19,13 +20,12 @@ const filesList = document.getElementById('filesList');
 const fileCheckboxList = document.getElementById('fileCheckboxList');
 const searchQuery = document.getElementById('searchQuery');
 const searchBtn = document.getElementById('searchBtn');
-const searchResult = document.getElementById('searchResult');
-const resultContent = document.getElementById('resultContent');
 const searchLoading = document.getElementById('searchLoading');
 const toast = document.getElementById('toast');
 const refreshFilesBtn = document.getElementById('refreshFilesBtn');
 const selectAllBtn = document.getElementById('selectAllBtn');
-const closeResultBtn = document.getElementById('closeResultBtn');
+const chatHistory = document.getElementById('chatHistory');
+const clearChatBtn = document.getElementById('clearChatBtn');
 
 // ============================================================================
 // Initialization
@@ -71,16 +71,16 @@ function setupEventListeners() {
     if (selectAllBtn) {
         selectAllBtn.addEventListener('click', toggleSelectAll);
     }
-    if (closeResultBtn) {
-        closeResultBtn.addEventListener('click', () => {
-            searchResult.style.display = 'none';
-        });
+    if (clearChatBtn) {
+        clearChatBtn.addEventListener('click', clearConversation);
     }
 
-    // Search with Ctrl+Enter
+    // Search with Enter (without Ctrl for better UX)
     if (searchQuery) {
         searchQuery.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
+            // Shift+Enter for new line, Enter alone to send
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 performSearch();
             }
         });
@@ -656,7 +656,7 @@ function toggleSelectAll() {
 
 async function performSearch() {
     // Check if required elements exist
-    if (!searchQuery || !searchLoading || !searchResult) {
+    if (!searchQuery || !searchLoading || !chatHistory) {
         console.error('Required search elements not found');
         return;
     }
@@ -676,69 +676,124 @@ async function performSearch() {
 
     const storeId = selectedRadio.value;
 
+    // Add user message to UI immediately
+    addMessageToChat('user', query);
+    searchQuery.value = '';
     searchLoading.style.display = 'flex';
-    searchResult.style.display = 'none';
 
     try {
+        const requestData = {
+            query: query,
+            store_ids: [storeId],
+            metadata_filter: null,
+            history: state.conversationHistory
+        };
+
+        console.log('Sending request:', requestData);
+
         const response = await fetch('/api/search', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                query: query,
-                store_ids: [storeId],
-                metadata_filter: null
-            })
+            body: JSON.stringify(requestData)
         });
 
         const data = await response.json();
 
+        console.log('Response:', data);
+
         if (data.success) {
-            renderSearchResult(data.result, data.citations);
-            searchResult.style.display = 'block';
+            // Add AI response to conversation history and UI
+            addMessageToChat('model', data.result);
+
+            // Update conversation history for Gemini API
+            state.conversationHistory.push({
+                role: 'user',
+                parts: [query]
+            });
+            state.conversationHistory.push({
+                role: 'model',
+                parts: [data.result]
+            });
+
+            console.log('Conversation history updated:', state.conversationHistory);
+
             showToast('Search completed', 'success');
         } else {
+            console.error('Search failed:', data.error);
             throw new Error(data.error);
         }
     } catch (error) {
+        console.error('Search error:', error);
         showToast(`Search failed: ${error.message}`, 'error');
+        // Remove the user message on error
+        const messages = chatHistory.querySelectorAll('.chat-message');
+        if (messages.length > 0) {
+            messages[messages.length - 1].remove();
+        }
     } finally {
         searchLoading.style.display = 'none';
     }
 }
 
-function renderSearchResult(result, citations) {
-    if (!resultContent) return; // Exit if element doesn't exist
+function addMessageToChat(role, text) {
+    if (!chatHistory) return;
 
-    let html = `<div class="result-text">${result}</div>`;
+    // Remove empty state if present
+    const emptyState = chatHistory.querySelector('.empty-chat');
+    if (emptyState) {
+        emptyState.remove();
+    }
 
-    if (citations && citations.length > 0) {
-        html += `
-            <div class="citations-section">
-                <h4>Citations</h4>
-                <div class="citations-list">
-        `;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}-message`;
 
-        citations.forEach((citation, index) => {
-            html += `
-                <div class="citation-item">
-                    <div class="citation-number">[${index + 1}]</div>
-                    <div class="citation-content">
-                        <div class="citation-text">${citation.content || citation.text || 'No content'}</div>
-                        ${citation.source ? `<div class="citation-source">Source: ${citation.source}</div>` : ''}
-                    </div>
-                </div>
-            `;
-        });
+    const avatarDiv = document.createElement('div');
+    avatarDiv.className = 'message-avatar';
+    avatarDiv.textContent = role === 'user' ? '👤' : '🤖';
 
-        html += `
-                </div>
+    const contentDiv = document.createElement('div');
+    contentDiv.className = 'message-content';
+
+    const textDiv = document.createElement('div');
+    textDiv.className = 'message-text';
+    textDiv.textContent = text;
+
+    const timeDiv = document.createElement('div');
+    timeDiv.className = 'message-time';
+    timeDiv.textContent = new Date().toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    contentDiv.appendChild(textDiv);
+    contentDiv.appendChild(timeDiv);
+    messageDiv.appendChild(avatarDiv);
+    messageDiv.appendChild(contentDiv);
+
+    chatHistory.appendChild(messageDiv);
+
+    // Scroll to bottom
+    chatHistory.scrollTop = chatHistory.scrollHeight;
+}
+
+function clearConversation() {
+    if (!confirm('Clear all conversation history?')) {
+        return;
+    }
+
+    state.conversationHistory = [];
+
+    if (chatHistory) {
+        chatHistory.innerHTML = `
+            <div class="empty-chat">
+                <p>No conversation yet. Start by asking a question!</p>
             </div>
         `;
     }
 
-    resultContent.innerHTML = html;
+    showToast('Conversation cleared', 'success');
 }
 
 // ============================================================================
