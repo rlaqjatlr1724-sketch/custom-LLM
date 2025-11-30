@@ -324,7 +324,8 @@ class GeminiClient:
             operation = self.client.file_search_stores.upload_to_file_search_store(
                 file=file_path,
                 file_search_store_name=store_name,
-                config={'display_name': display_name or os.path.basename(file_path)}
+                config={'display_name': display_name or os.path.basename(file_path)
+                        ,'max_tokens_per_chunk': 400}
             )
 
             self.logger.info(f"File uploaded and imported successfully to store {store_name}")
@@ -449,7 +450,8 @@ class GeminiClient:
         query: str,
         store_names: List[str],
         metadata_filter: Optional[Dict[str, Any]] = None,
-        model: str = "gemini-2.5-flash"
+        model: str = "gemini-2.5-flash",
+        history: Optional[List[Dict[str, str]]] = None
     ) -> Dict[str, Any]:
         """
         Search using FileSearch tool with specified stores
@@ -459,6 +461,7 @@ class GeminiClient:
             store_names: List of FileSearchStore names to search in
             metadata_filter: Optional metadata filter for search
             model: Model to use for search (default: gemini-2.5-flash)
+            history: Optional conversation history (list of {"role": "user"/"model", "parts": [text]})
 
         Returns:
             Dict with success status and search results
@@ -467,22 +470,42 @@ class GeminiClient:
             self.logger.info(f"Searching with FileSearch in stores: {store_names}")
             self.logger.debug(f"Query: {query}")
             self.logger.debug(f"Metadata filter: {metadata_filter}")
+            self.logger.debug(f"History length: {len(history) if history else 0}")
+
+            sys_inst = '''너는 올림픽공원 안내 도우미 '올공이'야. 친절하고 명랑한 말투를 사용해. 모르는 정보는 지어내지 말고 모른다고 해
+
+                        [작성 규칙]
+                        1. 질문과 직접적인 관련이 없는 부가적인 맥락(이유, 배경, 과거 히스토리, 향후 계획 등)은 답변에서 제거해라.
+                        2. 검색된 텍스트(Chunk)를 그대로 복사해서 붙여넣지 말고, 질문에 맞춰 자연스럽고 필요없는 정보를 제공하지 않도록 재구성해라.
+                        3. 질문자의 의도를 정확히 파악하고 그에 맞는 핵심 정보만 전달해라.
+                        4. date를 비교하여 최신정보를 기준으로 판단해라.
+                        5. 이전 대화 내역을 참고하여 문맥에 맞는 답변을 제공해라.
+                        '''
+
+            # Build conversation contents with history
+            contents = []
+            if history:
+                contents.extend(history)
+            contents.append({"role": "user", "parts": [query]})
 
             # Generate content with FileSearch tool
             response = self.client.models.generate_content(
                 model=model,
-                contents=query,
+                contents=contents,
                 config=types.GenerateContentConfig(
+                    system_instruction=sys_inst,
                     tools=[
                         types.Tool(
                             file_search=types.FileSearch(
                                 file_search_store_names=store_names
                             )
                         )
-                    ]
+                    ],
+                    temperature=0.3
+
                 )
             )
-            
+
             # Extract text from response
             result_text = response.text if hasattr(response, 'text') else str(response)
 
@@ -521,6 +544,14 @@ class GeminiClient:
         Returns:
             Dict with success status and search results with grounding metadata
         """
+        sys_inst = '''너는 올림픽공원 안내 도우미 '올공이'야. 친절하고 명랑한 말투를 사용해. 모르는 정보는 지어내지 말고 모른다고 해
+            
+                    [작성 규칙]
+                    1. 질문과 직접적인 관련이 없는 부가적인 맥락(이유, 배경, 과거 히스토리, 향후 계획 등)은 답변에서 제거해라.
+                    2. 검색된 텍스트(Chunk)를 그대로 복사해서 붙여넣지 말고, 질문에 맞춰 자연스럽고 필요없는 정보를 제공하지 않도록 재구성해라.
+                    3. 질문자의 의도를 정확히 파악하고 그에 맞는 핵심 정보만 전달해라.
+                    4. date를 비교하여 최신정보를 기준으로 판단해라.
+                    '''
         try:
             self.logger.info(f"Searching with grounding in stores: {store_names}")
             self.logger.debug(f"Query: {query}")
@@ -530,13 +561,16 @@ class GeminiClient:
                 model=model,
                 contents=query,
                 config=types.GenerateContentConfig(
-                    tools=[
+                        system_instruction= sys_inst,
+                        tools=[
                         types.Tool(
                             file_search=types.FileSearch(
                                 file_search_store_names=store_names
+                                )
                             )
-                        )
-                    ]
+                        ],
+                        temperature=0.3
+
                 )
             )
 

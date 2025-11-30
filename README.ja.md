@@ -63,7 +63,7 @@ GoogleのGemini APIのFile Search機能を使用した、意味論的検索と�
 
 4. **環境設定**
    ```bash
-   cp .env.example .env
+   cp .env .env
    # .envファイルを編集: GEMINI_API_KEYを追加
    ```
 

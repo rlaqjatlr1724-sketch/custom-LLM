@@ -4,8 +4,19 @@ from werkzeug.utils import secure_filename
 import os
 import tempfile
 from app.gemini_client import GeminiClient
+from app.wayfinding import WayfindingService
 
 bp = Blueprint('main', __name__)
+
+# 길찾기 서비스 초기화
+wayfinding_service = None
+
+def get_wayfinding_service():
+    """길찾기 서비스 싱글톤 인스턴스 반환"""
+    global wayfinding_service
+    if wayfinding_service is None:
+        wayfinding_service = WayfindingService()
+    return wayfinding_service
 
 # 허용되는 파일 확장자
 ALLOWED_EXTENSIONS = {'pdf', 'txt', 'doc', 'docx', 'xlsx', 'xls', 'ppt', 'pptx', 'csv', 'json', 'xml', 'html'}
@@ -23,6 +34,16 @@ def index():
         return render_template('index.html')
     except Exception as e:
         logger.error(f'Index page rendering failed - IP: {request.remote_addr} - Error: {str(e)}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/admin')
+def admin():
+    logger = get_logger()
+    logger.info(f'Admin page request - IP: {request.remote_addr}')
+    try:
+        return render_template('admin.html')
+    except Exception as e:
+        logger.error(f'Admin page rendering failed - IP: {request.remote_addr} - Error: {str(e)}')
         return jsonify({'success': False, 'error': str(e)}), 500
 
 # ==================== FileSearchStore Management ====================
@@ -329,6 +350,7 @@ def search():
         query = data.get('query', '').strip()
         store_ids = data.get('store_ids', [])
         metadata_filter = data.get('metadata_filter', None)
+        history = data.get('history', [])
 
         if not query:
             logger.warning(f'Search query is missing - IP: {client_ip}')
@@ -342,10 +364,10 @@ def search():
             logger.warning(f'Invalid store_ids format - IP: {client_ip}')
             return jsonify({'success': False, 'error': 'store_ids must be an array'}), 400
 
-        logger.debug(f'Search started - Query: {query} - Stores: {store_ids} - Metadata filter: {metadata_filter} - IP: {client_ip}')
+        logger.debug(f'Search started - Query: {query} - Stores: {store_ids} - History: {len(history)} messages - IP: {client_ip}')
 
         gemini = GeminiClient(current_app.config['GEMINI_API_KEY'])
-        result = gemini.search_with_file_search(query, store_ids, metadata_filter)
+        result = gemini.search_with_file_search(query, store_ids, metadata_filter, history=history)
 
         if result['success']:
             logger.info(f'Search successful - Query: {query} - Stores: {store_ids} - IP: {client_ip}')
@@ -493,4 +515,66 @@ def import_file_to_store():
 
     except Exception as e:
         logger.error(f'File import exception occurred - IP: {client_ip} - Error: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ==================== Wayfinding (길찾기) Routes ====================
+
+@bp.route('/api/wayfinding/facilities', methods=['GET'])
+def get_facilities():
+    """시설물 목록 조회"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+
+    try:
+        logger.info(f'Facilities list request - IP: {client_ip}')
+
+        service = get_wayfinding_service()
+        facility_names = service.get_facility_names()
+
+        logger.info(f'Facilities list retrieval successful - Count: {len(facility_names)} - IP: {client_ip}')
+        return jsonify({
+            'success': True,
+            'facilities': facility_names,
+            'count': len(facility_names)
+        }), 200
+
+    except Exception as e:
+        logger.error(f'Facilities list retrieval exception - IP: {client_ip} - Error: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/wayfinding/find-path', methods=['POST'])
+def find_path():
+    """최단 경로 찾기"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+
+    try:
+        logger.info(f'Path finding request - IP: {client_ip}')
+
+        data = request.get_json()
+        start_name = data.get('start', '').strip()
+        end_name = data.get('end', '').strip()
+
+        if not start_name or not end_name:
+            logger.warning(f'Start or end location is missing - IP: {client_ip}')
+            return jsonify({'success': False, 'error': 'Start and end locations are required'}), 400
+
+        if start_name == end_name:
+            logger.warning(f'Start and end are the same - IP: {client_ip}')
+            return jsonify({'success': False, 'error': 'Start and end locations must be different'}), 400
+
+        logger.debug(f'Finding path - Start: {start_name} - End: {end_name} - IP: {client_ip}')
+
+        service = get_wayfinding_service()
+        result = service.find_path(start_name, end_name)
+
+        if result['success']:
+            logger.info(f'Path found successfully - Start: {start_name} - End: {end_name} - Distance: {result.get("distance")} - IP: {client_ip}')
+            return jsonify(result), 200
+        else:
+            logger.warning(f'Path finding failed - Start: {start_name} - End: {end_name} - Error: {result.get("message")} - IP: {client_ip}')
+            return jsonify(result), 400
+
+    except Exception as e:
+        logger.error(f'Path finding exception - IP: {client_ip} - Error: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500

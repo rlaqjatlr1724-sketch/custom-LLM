@@ -854,6 +854,25 @@ body {
     .search-container {
         grid-template-columns: 1fr;
     }
+
+    .mascot-section {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .mascot-image {
+        width: 100px;
+        height: 100px;
+    }
+
+    .mascot-greeting h3 {
+        font-size: 18px;
+    }
+
+    .mascot-greeting p {
+        font-size: 13px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -1029,6 +1048,60 @@ body {
     }
 }
 
+/* Mascot Section */
+.mascot-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(6, 182, 212, 0.1) 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.mascot-section:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-color);
+}
+
+.mascot-image {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+    flex-shrink: 0;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.mascot-greeting {
+    flex: 1;
+}
+
+.mascot-greeting h3 {
+    color: var(--primary-color);
+    font-size: 20px;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.mascot-greeting p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+}
+
 /* FileStore 상세 뷰 */
 .store-detail-view {
     background-color: var(--bg-primary);
@@ -1100,4 +1173,98 @@ body {
     text-align: center;
     padding: 20px;
     font-size: 14px;
+}
+
+/* ============================================================================
+   Wayfinding (길찾기) Styles
+   ============================================================================ */
+
+.wayfinding-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.wayfinding-controls {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+}
+
+.control-group {
+    margin-bottom: 20px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.path-result {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: var(--shadow-md);
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.path-info {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 16px;
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+}
+
+.info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.info-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 60px;
+}
+
+.info-value {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.path-image-container {
+    margin-top: 16px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.path-image-container img {
+    display: block;
+    width: 100%;
+    height: auto;
 }

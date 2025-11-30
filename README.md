@@ -63,7 +63,7 @@ A modern web application for semantic search and document management using Googl
 
 4. **Configure environment**
    ```bash
-   cp .env.example .env
+   cp .env .env
    # Edit .env and add your GEMINI_API_KEY
    ```
 

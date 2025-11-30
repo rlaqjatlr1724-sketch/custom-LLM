@@ -21,21 +21,13 @@
             </div>
 
             <nav class="sidebar-nav">
-                <button class="nav-item active" data-tab="upload">
-                    <span class="icon">📤</span>
-                    <span class="label">File Upload</span>
-                </button>
-                <button class="nav-item" data-tab="files">
-                    <span class="icon">📁</span>
-                    <span class="label">My Files</span>
-                </button>
-                <button class="nav-item" data-tab="stores">
-                    <span class="icon">💾</span>
-                    <span class="label">FileStore</span>
-                </button>
-                <button class="nav-item" data-tab="search">
+                <button class="nav-item active" data-tab="search">
                     <span class="icon">🔍</span>
                     <span class="label">Chat Search</span>
+                </button>
+                <button class="nav-item" data-tab="wayfinding">
+                    <span class="icon">🗺️</span>
+                    <span class="label">Map Guide</span>
                 </button>
             </nav>
 
@@ -46,120 +38,19 @@
 
         <!-- 메인 컨텐츠 -->
         <main class="main-content">
-            <!-- File Upload Tab -->
-            <section id="upload" class="tab-content active">
-                <div class="section-header">
-                    <h1>File Upload</h1>
-                    <p>Upload files from your computer to Gemini</p>
-                </div>
-
-                <div class="upload-area" id="uploadArea">
-                    <div class="upload-icon">📄</div>
-                    <h3>Drag files here or click to select</h3>
-                    <p>Supported formats: PDF, Word, Excel, PPT, TXT, CSV, and more</p>
-                    <input type="file" id="fileInput" style="display: none;" accept=".pdf,.txt,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.csv,.json,.xml,.html" multiple>
-                </div>
-
-                <div id="uploadProgress" class="upload-progress" style="display: none;">
-                    <div class="progress-item">
-                        <span id="uploadFileName"></span>
-                        <div class="progress-bar">
-                            <div class="progress-fill" id="progressFill"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="uploadStatus" class="upload-status"></div>
-            </section>
-
-            <!-- My Files Tab -->
-            <section id="files" class="tab-content">
-                <div class="section-header">
-                    <h1>Uploaded Files</h1>
-                    <p>View all files in your temporary storage</p>
-                    <button class="btn btn-secondary" id="refreshFilesBtn">Refresh</button>
-                </div>
-
-                <!-- Import to FileStore Panel -->
-                <div id="importPanel" class="import-panel" style="display: none;">
-                    <div class="import-header">
-                        <h3>Move Selected Files to FileStore</h3>
-                        <button class="btn btn-secondary btn-sm" id="cancelImportBtn">Cancel</button>
-                    </div>
-                    <div class="import-controls">
-                        <select id="storeSelectForImport" class="input-field">
-                            <option value="">Select FileStore...</option>
-                        </select>
-                        <button class="btn btn-primary" id="confirmImportBtn">Move</button>
-                    </div>
-                    <div id="importStatus" class="upload-status"></div>
-                </div>
-
-                <div id="filesList" class="files-grid">
-                    <div class="empty-state">
-                        <div class="empty-icon">📭</div>
-                        <p>No uploaded files yet</p>
-                    </div>
-                </div>
-            </section>
-
-            <!-- FileStore Tab -->
-            <section id="stores" class="tab-content">
-                <div class="section-header">
-                    <h1>FileStore Management</h1>
-                    <p>Manage your FileStores and persistent document storage</p>
-                </div>
-
-                <!-- Direct Upload to FileStore -->
-                <div class="upload-to-store-section">
-                    <div class="subsection-header">
-                        <h3>Upload Files to FileStore</h3>
-                    </div>
-                    <div class="upload-to-store-form">
-                        <select id="storeSelectForUpload" class="input-field">
-                            <option value="">Select FileStore...</option>
-                        </select>
-                        <div class="upload-area-small" id="uploadToStoreArea">
-                            <div class="upload-icon">📄</div>
-                            <p>Drag files here or click to select</p>
-                            <input type="file" id="fileInputForStore" style="display: none;" accept=".pdf,.txt,.doc,.docx,.xlsx,.xls,.ppt,.pptx,.csv,.json,.xml,.html" multiple>
-                        </div>
-                        <div id="uploadToStoreProgress" class="upload-progress" style="display: none;">
-                            <div class="progress-item">
-                                <span id="uploadToStoreFileName"></span>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" id="progressFillStore"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="uploadToStoreStatus" class="upload-status"></div>
-                    </div>
-                </div>
-
-                <div id="storesList" class="stores-container">
-                    <div class="empty-state">
-                        <div class="empty-icon">💾</div>
-                        <p>Loading FileStores...</p>
-                    </div>
-                </div>
-
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total Documents</div>
-                        <div class="stat-value" id="totalFiles">0</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Total Storage</div>
-                        <div class="stat-value" id="totalSize">0 B</div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Chat Search Tab -->
-            <section id="search" class="tab-content">
+            <section id="search" class="tab-content active">
                 <div class="section-header">
-                    <h1>Chat Search</h1>
-                    <p>Search your uploaded files with natural language questions</p>
+                    <h1>한국체육산업개발(주)</h1>
+                </div>
+
+                <!-- Mascot Section -->
+                <div class="mascot-section">
+                    <img src="{{ url_for('static', filename='images/mascot.png') }}" alt="Chatbot Mascot" class="mascot-image">
+                    <div class="mascot-greeting">
+                        <h3>안녕하세요! 올림픽 공원 챗봇 올공이 입니다!</h3>
+                        <p>AI assistant는 잘못된 답변을 제공할 수 있습니다. 자세한 문의는 고객센터를 이용하여 주세요.</p>
+                    </div>
                 </div>
 
                 <div class="search-container">
@@ -191,6 +82,65 @@
                 <div id="searchLoading" class="loading" style="display: none;">
                     <div class="spinner"></div>
                     <p>Searching...</p>
+                </div>
+            </section>
+
+            <!-- Wayfinding Tab -->
+            <section id="wayfinding" class="tab-content">
+                <div class="section-header">
+                    <h1>🗺️ 올림픽공원 길찾기</h1>
+                    <p>출발지와 도착지를 선택하여 최단 경로를 찾아보세요</p>
+                </div>
+
+                <div class="wayfinding-container">
+                    <div class="wayfinding-controls">
+                        <div class="control-group">
+                            <label for="startLocation">🏁 출발지</label>
+                            <select id="startLocation" class="input-field">
+                                <option value="">시설물을 선택하세요...</option>
+                            </select>
+                        </div>
+
+                        <div class="control-group">
+                            <label for="endLocation">🎯 도착지</label>
+                            <select id="endLocation" class="input-field">
+                                <option value="">시설물을 선택하세요...</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary" id="findPathBtn" style="width: 100%; margin-top: 20px;">
+                            길찾기 🚀
+                        </button>
+                    </div>
+
+                    <div id="pathResult" class="path-result" style="display: none;">
+                        <div class="result-header">
+                            <h3 id="pathResultTitle">경로 결과</h3>
+                            <button class="btn btn-secondary btn-sm" id="closePathResultBtn">닫기</button>
+                        </div>
+                        <div class="path-info">
+                            <div class="info-item">
+                                <span class="info-label">출발:</span>
+                                <span id="pathStartName" class="info-value"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">도착:</span>
+                                <span id="pathEndName" class="info-value"></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">거리:</span>
+                                <span id="pathDistance" class="info-value"></span>
+                            </div>
+                        </div>
+                        <div id="pathImageContainer" class="path-image-container">
+                            <img id="pathImage" src="" alt="경로 지도" style="width: 100%; border-radius: 8px;">
+                        </div>
+                    </div>
+
+                    <div id="pathLoading" class="loading" style="display: none;">
+                        <div class="spinner"></div>
+                        <p>경로를 계산하는 중...</p>
+                    </div>
                 </div>
             </section>
         </main>

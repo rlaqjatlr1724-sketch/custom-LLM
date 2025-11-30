@@ -63,7 +63,7 @@
 
 4. **配置环境**
    ```bash
-   cp .env.example .env
+   cp .env .env
    # 编辑 .env 文件添加 GEMINI_API_KEY
    ```
 

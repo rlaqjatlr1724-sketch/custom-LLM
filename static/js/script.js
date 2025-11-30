@@ -32,7 +32,12 @@ const closeResultBtn = document.getElementById('closeResultBtn');
 // ============================================================================
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
-    loadFiles();
+
+    // Only load files if the filesList element exists
+    if (filesList) {
+        loadFiles();
+    }
+
     loadStores();
 });
 
@@ -45,29 +50,41 @@ function setupEventListeners() {
         item.addEventListener('click', handleTabChange);
     });
 
-    // File upload
-    uploadArea.addEventListener('click', () => fileInput.click());
-    uploadArea.addEventListener('dragover', handleDragOver);
-    uploadArea.addEventListener('dragleave', handleDragLeave);
-    uploadArea.addEventListener('drop', handleDrop);
-    fileInput.addEventListener('change', handleFileSelect);
+    // File upload (only if elements exist)
+    if (uploadArea && fileInput) {
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+        uploadArea.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+    }
 
     // File list
-    refreshFilesBtn.addEventListener('click', loadFiles);
+    if (refreshFilesBtn) {
+        refreshFilesBtn.addEventListener('click', loadFiles);
+    }
 
     // Search
-    searchBtn.addEventListener('click', performSearch);
-    selectAllBtn.addEventListener('click', toggleSelectAll);
-    closeResultBtn.addEventListener('click', () => {
-        searchResult.style.display = 'none';
-    });
+    if (searchBtn) {
+        searchBtn.addEventListener('click', performSearch);
+    }
+    if (selectAllBtn) {
+        selectAllBtn.addEventListener('click', toggleSelectAll);
+    }
+    if (closeResultBtn) {
+        closeResultBtn.addEventListener('click', () => {
+            searchResult.style.display = 'none';
+        });
+    }
 
     // Search with Ctrl+Enter
-    searchQuery.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'Enter') {
-            performSearch();
-        }
-    });
+    if (searchQuery) {
+        searchQuery.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                performSearch();
+            }
+        });
+    }
 
     // Import panel buttons
     const confirmImportBtn = document.getElementById('confirmImportBtn');
@@ -259,6 +276,8 @@ async function uploadFile(file, index, total) {
 // File Management
 // ============================================================================
 async function loadFiles() {
+    if (!filesList) return; // Exit if element doesn't exist
+
     try {
         const response = await fetch('/api/files');
         const data = await response.json();
@@ -271,16 +290,20 @@ async function loadFiles() {
         }
     } catch (error) {
         console.error('Error loading files:', error);
-        filesList.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">❌</div>
-                <p>Failed to load files: ${error.message}</p>
-            </div>
-        `;
+        if (filesList) {
+            filesList.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">❌</div>
+                    <p>Failed to load files: ${error.message}</p>
+                </div>
+            `;
+        }
     }
 }
 
 function renderFiles() {
+    if (!filesList) return; // Exit if element doesn't exist
+
     if (state.files.length === 0) {
         filesList.innerHTML = `
             <div class="empty-state">
@@ -418,20 +441,20 @@ async function loadStores() {
 
 function updateStoreSelects() {
     const storeSelectForUpload = document.getElementById('storeSelectForUpload');
-    if (storeSelectForUpload) {
-        const selectedValue = storeSelectForUpload.value;
-        storeSelectForUpload.innerHTML = '<option value="">Select FileStore...</option>';
+    if (!storeSelectForUpload) return; // Exit if element doesn't exist
 
-        state.stores.forEach(store => {
-            const option = document.createElement('option');
-            option.value = store.store_name;
-            option.textContent = store.display_name;
-            storeSelectForUpload.appendChild(option);
-        });
+    const selectedValue = storeSelectForUpload.value;
+    storeSelectForUpload.innerHTML = '<option value="">Select FileStore...</option>';
 
-        if (selectedValue) {
-            storeSelectForUpload.value = selectedValue;
-        }
+    state.stores.forEach(store => {
+        const option = document.createElement('option');
+        option.value = store.store_name;
+        option.textContent = store.display_name;
+        storeSelectForUpload.appendChild(option);
+    });
+
+    if (selectedValue) {
+        storeSelectForUpload.value = selectedValue;
     }
 }
 
@@ -518,14 +541,15 @@ function updateStats() {
     const totalFilesElem = document.getElementById('totalFiles');
     const totalSizeElem = document.getElementById('totalSize');
 
-    if (totalFilesElem && totalSizeElem) {
-        const totalActiveDocuments = state.stores.reduce((sum, s) => sum + (s.active_documents_count || 0), 0);
-        totalFilesElem.textContent = totalActiveDocuments;
+    // Only update if elements exist
+    if (!totalFilesElem || !totalSizeElem) return;
 
-        const totalBytes = state.stores.reduce((sum, s) => sum + (s.size_bytes || 0), 0);
-        const totalSize = (totalBytes / (1024 * 1024)).toFixed(2);
-        totalSizeElem.textContent = totalSize + ' MB';
-    }
+    const totalActiveDocuments = state.stores.reduce((sum, s) => sum + (s.active_documents_count || 0), 0);
+    totalFilesElem.textContent = totalActiveDocuments;
+
+    const totalBytes = state.stores.reduce((sum, s) => sum + (s.size_bytes || 0), 0);
+    const totalSize = (totalBytes / (1024 * 1024)).toFixed(2);
+    totalSizeElem.textContent = totalSize + ' MB';
 }
 
 async function createStore() {
@@ -631,6 +655,12 @@ function toggleSelectAll() {
 }
 
 async function performSearch() {
+    // Check if required elements exist
+    if (!searchQuery || !searchLoading || !searchResult) {
+        console.error('Required search elements not found');
+        return;
+    }
+
     const selectedRadio = document.querySelector('.store-radio:checked');
 
     if (!selectedRadio) {
@@ -679,6 +709,8 @@ async function performSearch() {
 }
 
 function renderSearchResult(result, citations) {
+    if (!resultContent) return; // Exit if element doesn't exist
+
     let html = `<div class="result-text">${result}</div>`;
 
     if (citations && citations.length > 0) {
@@ -716,7 +748,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uploadToStoreArea = document.getElementById('uploadToStoreArea');
     const fileInputForStore = document.getElementById('fileInputForStore');
 
-    if (uploadToStoreArea) {
+    if (uploadToStoreArea && fileInputForStore) {
         uploadToStoreArea.addEventListener('click', () => fileInputForStore.click());
         uploadToStoreArea.addEventListener('dragover', handleDragOver);
         uploadToStoreArea.addEventListener('dragleave', handleDragLeave);
@@ -959,3 +991,145 @@ function showToast(message, type = 'info') {
         toast.classList.remove('show');
     }, 3000);
 }
+
+// ============================================================================
+// Wayfinding (길찾기) Functions
+// ============================================================================
+let wayfindingFacilities = [];
+
+// DOM 요소
+const startLocation = document.getElementById('startLocation');
+const endLocation = document.getElementById('endLocation');
+const findPathBtn = document.getElementById('findPathBtn');
+const pathResult = document.getElementById('pathResult');
+const pathLoading = document.getElementById('pathLoading');
+const pathImage = document.getElementById('pathImage');
+const pathStartName = document.getElementById('pathStartName');
+const pathEndName = document.getElementById('pathEndName');
+const pathDistance = document.getElementById('pathDistance');
+const closePathResultBtn = document.getElementById('closePathResultBtn');
+
+// 이벤트 리스너 등록
+if (findPathBtn) {
+    findPathBtn.addEventListener('click', handleFindPath);
+}
+
+if (closePathResultBtn) {
+    closePathResultBtn.addEventListener('click', () => {
+        pathResult.style.display = 'none';
+    });
+}
+
+// 시설물 목록 로드
+async function loadFacilities() {
+    try {
+        const response = await fetch('/api/wayfinding/facilities');
+        const data = await response.json();
+
+        if (data.success) {
+            wayfindingFacilities = data.facilities;
+            populateFacilitySelects();
+            console.log(`Loaded ${data.count} facilities`);
+        } else {
+            showToast('시설물 목록을 불러오는데 실패했습니다', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading facilities:', error);
+        showToast('시설물 목록을 불러오는 중 오류가 발생했습니다', 'error');
+    }
+}
+
+// 드롭다운에 시설물 목록 채우기
+function populateFacilitySelects() {
+    if (!startLocation || !endLocation) return;
+
+    // 출발지 드롭다운
+    startLocation.innerHTML = '<option value="">시설물을 선택하세요...</option>';
+    wayfindingFacilities.forEach(facility => {
+        const option = document.createElement('option');
+        option.value = facility;
+        option.textContent = facility;
+        startLocation.appendChild(option);
+    });
+
+    // 도착지 드롭다운
+    endLocation.innerHTML = '<option value="">시설물을 선택하세요...</option>';
+    wayfindingFacilities.forEach(facility => {
+        const option = document.createElement('option');
+        option.value = facility;
+        option.textContent = facility;
+        endLocation.appendChild(option);
+    });
+
+    // 기본값 설정 (첫 번째와 두 번째 시설물)
+    if (wayfindingFacilities.length >= 2) {
+        startLocation.value = wayfindingFacilities[0];
+        endLocation.value = wayfindingFacilities[1];
+    }
+}
+
+// 길찾기 실행
+async function handleFindPath() {
+    const start = startLocation.value;
+    const end = endLocation.value;
+
+    // 유효성 검사
+    if (!start || !end) {
+        showToast('출발지와 도착지를 모두 선택해주세요', 'error');
+        return;
+    }
+
+    if (start === end) {
+        showToast('출발지와 도착지가 같습니다. 다른 지점을 선택해주세요', 'error');
+        return;
+    }
+
+    // 로딩 표시
+    pathResult.style.display = 'none';
+    pathLoading.style.display = 'flex';
+
+    try {
+        const response = await fetch('/api/wayfinding/find-path', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                start: start,
+                end: end
+            })
+        });
+
+        const data = await response.json();
+
+        pathLoading.style.display = 'none';
+
+        if (data.success) {
+            // 결과 표시
+            pathStartName.textContent = data.start;
+            pathEndName.textContent = data.end;
+            pathDistance.textContent = `${data.distance.toFixed(2)} 픽셀`;
+            pathImage.src = `data:image/png;base64,${data.image}`;
+            pathResult.style.display = 'block';
+
+            showToast('경로를 찾았습니다!', 'success');
+        } else {
+            showToast(`경로 찾기 실패: ${data.message || data.error}`, 'error');
+        }
+    } catch (error) {
+        pathLoading.style.display = 'none';
+        console.error('Error finding path:', error);
+        showToast('경로를 찾는 중 오류가 발생했습니다', 'error');
+    }
+}
+
+// 탭 전환 시 시설물 목록 로드
+const originalHandleTabChange = handleTabChange;
+handleTabChange = function(e) {
+    originalHandleTabChange(e);
+
+    const tabName = e.currentTarget.getAttribute('data-tab');
+    if (tabName === 'wayfinding' && wayfindingFacilities.length === 0) {
+        loadFacilities();
+    }
+};
