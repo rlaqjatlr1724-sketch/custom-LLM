@@ -287,3 +287,177 @@ class WayfindingService:
                 nearest = facility['name']
 
         return nearest
+
+    def find_path_from_coords(self, start_x, start_y, end_x, end_y):
+        """
+        좌표를 이용한 경로 찾기 (지도 클릭 기반)
+
+        Args:
+            start_x, start_y: 출발지 좌표
+            end_x, end_y: 도착지 좌표
+
+        Returns:
+            dict: 경로 찾기 결과
+        """
+        try:
+            logger.info(f"Finding path from coords ({start_x}, {start_y}) to ({end_x}, {end_y})")
+
+            # 데이터 로드
+            G, facilities, tree, node_list = self.load_graph_data()
+
+            if not G:
+                return {
+                    'success': False,
+                    'message': '지도 데이터 파일이 없거나 로드에 실패했습니다.'
+                }
+
+            # 1. 클릭한 좌표에서 가장 가까운 도로 노드 찾기
+            start_coords = (start_x, start_y)
+            end_coords = (end_x, end_y)
+
+            _, s_idx = tree.query(start_coords)
+            _, e_idx = tree.query(end_coords)
+            start_node = node_list[s_idx]
+            end_node = node_list[e_idx]
+
+            # 2. 다익스트라 경로 탐색
+            try:
+                path = nx.shortest_path(G, source=start_node, target=end_node, weight='weight')
+                path_length = nx.shortest_path_length(G, source=start_node, target=end_node, weight='weight')
+            except nx.NetworkXNoPath:
+                return {
+                    'success': False,
+                    'message': '길이 끊겨 있어 갈 수 없습니다.'
+                }
+
+            # 3. 지도 이미지 로드 및 시각화
+            if not self.map_image_path.exists():
+                return {
+                    'success': False,
+                    'message': f'지도 이미지 파일이 없습니다: {self.map_image_path}'
+                }
+
+            try:
+                img = mpimg.imread(str(self.map_image_path))
+            except Exception as e:
+                logger.error(f"Failed to load map image: {e}")
+                return {
+                    'success': False,
+                    'message': '지도 이미지를 읽을 수 없습니다.'
+                }
+
+            # 이미지 크기 설정
+            fixed_w = 953
+            fixed_h = 676
+
+            fig, ax = plt.subplots(figsize=(10, 6))
+            ax.imshow(img, extent=[0, fixed_w, fixed_h, 0])
+
+            # 경로 그리기
+            path_x = [p[0] for p in path]
+            path_y = [p[1] for p in path]
+
+            ax.plot(path_x, path_y, color='red', linewidth=3, label='추천 경로', alpha=0.7)
+
+            # 출발지/도착지 표시
+            ax.scatter(start_x, start_y, color='blue', s=200, label='출발', zorder=5, edgecolors='white', linewidth=2)
+            ax.scatter(end_x, end_y, color='green', s=200, label='도착', zorder=5, edgecolors='white', linewidth=2)
+
+            # 꾸미기
+            ax.legend(loc='upper right', fontsize=10)
+            ax.axis('off')
+
+            # 이미지를 base64로 인코딩
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png', bbox_inches='tight', dpi=150)
+            buf.seek(0)
+            image_base64 = base64.b64encode(buf.read()).decode('utf-8')
+            plt.close(fig)
+
+            logger.info(f"Path found successfully: distance={path_length:.2f}")
+
+            return {
+                'success': True,
+                'message': '최단 경로를 찾았습니다!',
+                'image': image_base64,
+                'distance': float(path_length),
+                'start_coords': {'x': start_x, 'y': start_y},
+                'end_coords': {'x': end_x, 'y': end_y}
+            }
+
+        except Exception as e:
+            logger.error(f"Error in find_path_from_coords: {e}", exc_info=True)
+            return {
+                'success': False,
+                'message': f'경로 찾기 중 오류가 발생했습니다: {str(e)}'
+            }
+
+    def find_nearest_facility_by_category(self, x, y, category='toilet', name_pattern=None):
+        """
+        특정 카테고리 또는 이름 패턴의 가장 가까운 시설물 찾기 및 경로 표시
+
+        Args:
+            x, y: 현재 위치 좌표
+            category: 시설물 카테고리 (예: 'toilet')
+            name_pattern: 시설물 이름 검색 패턴 (예: '매점', '음수대')
+
+        Returns:
+            dict: 경로 찾기 결과
+        """
+        try:
+            logger.info(f"Finding nearest facility - category: {category}, pattern: {name_pattern} from ({x}, {y})")
+
+            # 데이터 로드
+            G, facilities, tree, node_list = self.load_graph_data()
+
+            if not G or not facilities:
+                return {
+                    'success': False,
+                    'message': '지도 데이터 파일이 없거나 로드에 실패했습니다.'
+                }
+
+            # 1. 카테고리 또는 이름 패턴으로 시설물 필터링
+            if name_pattern:
+                # 이름 패턴으로 검색
+                category_facilities = [f for f in facilities if name_pattern in f.get('name', '')]
+            else:
+                # 카테고리로 검색
+                category_facilities = [f for f in facilities if f.get('category') == category]
+
+            if not category_facilities:
+                search_term = name_pattern if name_pattern else category
+                return {
+                    'success': False,
+                    'message': f'{search_term} 시설물을 찾을 수 없습니다.'
+                }
+
+            # 2. 가장 가까운 시설물 찾기
+            min_dist = float('inf')
+            nearest_facility = None
+
+            for facility in category_facilities:
+                fx, fy = facility['x'], facility['y']
+                dist = math.hypot(x - fx, y - fy)
+
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest_facility = facility
+
+            if not nearest_facility:
+                return {
+                    'success': False,
+                    'message': '가까운 시설물을 찾을 수 없습니다.'
+                }
+
+            # 3. 경로 찾기 (좌표 기반)
+            return self.find_path_from_coords(
+                x, y,
+                nearest_facility['x'], nearest_facility['y']
+            )
+
+        except Exception as e:
+            logger.error(f"Error in find_nearest_facility_by_category: {e}", exc_info=True)
+            return {
+                'success': False,
+                'message': f'시설물 찾기 중 오류가 발생했습니다: {str(e)}'
+            }

@@ -578,3 +578,74 @@ def find_path():
     except Exception as e:
         logger.error(f'Path finding exception - IP: {client_ip} - Error: {str(e)}', exc_info=True)
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/wayfinding/find-path-coords', methods=['POST'])
+def find_path_coords():
+    """좌표 기반 최단 경로 찾기 (지도 클릭)"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+
+    try:
+        logger.info(f'Coordinate-based path finding request - IP: {client_ip}')
+
+        data = request.get_json()
+        start_x = data.get('start_x')
+        start_y = data.get('start_y')
+        end_x = data.get('end_x')
+        end_y = data.get('end_y')
+
+        if None in [start_x, start_y, end_x, end_y]:
+            logger.warning(f'Missing coordinates - IP: {client_ip}')
+            return jsonify({'success': False, 'error': 'All coordinates (start_x, start_y, end_x, end_y) are required'}), 400
+
+        logger.debug(f'Finding path - Start: ({start_x}, {start_y}) - End: ({end_x}, {end_y}) - IP: {client_ip}')
+
+        service = get_wayfinding_service()
+        result = service.find_path_from_coords(start_x, start_y, end_x, end_y)
+
+        if result['success']:
+            logger.info(f'Path found successfully - Distance: {result.get("distance")} - IP: {client_ip}')
+            return jsonify(result), 200
+        else:
+            logger.warning(f'Path finding failed - Error: {result.get("message")} - IP: {client_ip}')
+            return jsonify(result), 400
+
+    except Exception as e:
+        logger.error(f'Coordinate-based path finding exception - IP: {client_ip} - Error: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/api/wayfinding/nearest-facility', methods=['POST'])
+def find_nearest_facility():
+    """가장 가까운 특정 시설물 찾기"""
+    logger = get_logger()
+    client_ip = request.remote_addr
+
+    try:
+        logger.info(f'Nearest facility request - IP: {client_ip}')
+
+        data = request.get_json()
+        x = data.get('x')
+        y = data.get('y')
+        category = data.get('category', 'toilet')
+        name_pattern = data.get('name_pattern')
+
+        if x is None or y is None:
+            logger.warning(f'Missing coordinates - IP: {client_ip}')
+            return jsonify({'success': False, 'error': 'Coordinates (x, y) are required'}), 400
+
+        search_term = name_pattern if name_pattern else category
+        logger.debug(f'Finding nearest {search_term} - Location: ({x}, {y}) - IP: {client_ip}')
+
+        service = get_wayfinding_service()
+        result = service.find_nearest_facility_by_category(x, y, category, name_pattern)
+
+        if result['success']:
+            logger.info(f'Nearest facility found - Category: {category} - IP: {client_ip}')
+            return jsonify(result), 200
+        else:
+            logger.warning(f'Nearest facility search failed - Error: {result.get("message")} - IP: {client_ip}')
+            return jsonify(result), 400
+
+    except Exception as e:
+        logger.error(f'Nearest facility exception - IP: {client_ip} - Error: {str(e)}', exc_info=True)
+        return jsonify({'success': False, 'error': str(e)}), 500

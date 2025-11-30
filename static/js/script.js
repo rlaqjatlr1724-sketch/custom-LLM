@@ -751,7 +751,20 @@ function addMessageToChat(role, text) {
 
     const avatarDiv = document.createElement('div');
     avatarDiv.className = 'message-avatar';
-    avatarDiv.textContent = role === 'user' ? '👤' : '🤖';
+
+    // 사용자는 랜덤 이모지, 모델은 마스코트 프로필 이미지 사용
+    if (role === 'user') {
+        // 올림픽공원 관련 랜덤 이모지
+        const userEmojis = ['🏊', '📖', '🌹', '🎾', '⚽', '🏅'];
+        const randomEmoji = userEmojis[Math.floor(Math.random() * userEmojis.length)];
+        avatarDiv.textContent = randomEmoji;
+    } else {
+        const avatarImg = document.createElement('img');
+        avatarImg.src = '/static/images/mascot_profile.png';
+        avatarImg.alt = '백호돌이';
+        avatarImg.className = 'avatar-image';
+        avatarDiv.appendChild(avatarImg);
+    }
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
@@ -1048,143 +1061,260 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================================================
-// Wayfinding (길찾기) Functions
+// Wayfinding (길찾기) Functions - Map Click Based
 // ============================================================================
-let wayfindingFacilities = [];
+
+// Map click state
+let mapClickState = {
+    startCoords: null,
+    endCoords: null,
+    mode: 'wayfinding' // 'wayfinding' or 'facility'
+};
 
 // DOM 요소
-const startLocation = document.getElementById('startLocation');
-const endLocation = document.getElementById('endLocation');
-const findPathBtn = document.getElementById('findPathBtn');
 const pathResult = document.getElementById('pathResult');
 const pathLoading = document.getElementById('pathLoading');
 const pathImage = document.getElementById('pathImage');
-const pathStartName = document.getElementById('pathStartName');
-const pathEndName = document.getElementById('pathEndName');
 const pathDistance = document.getElementById('pathDistance');
 const closePathResultBtn = document.getElementById('closePathResultBtn');
+const resetMapBtn = document.getElementById('resetMapBtn');
+const mapClickStatus = document.getElementById('mapClickStatus');
+const initialMap = document.getElementById('initialMap');
+const initialMapImage = document.getElementById('initialMapImage');
+
+// Nearest Facility DOM 요소
+const facilityPathResult = document.getElementById('facilityPathResult');
+const facilityPathLoading = document.getElementById('facilityPathLoading');
+const facilityPathImage = document.getElementById('facilityPathImage');
+const facilityPathDistance = document.getElementById('facilityPathDistance');
+const closeFacilityPathResultBtn = document.getElementById('closeFacilityPathResultBtn');
+const resetFacilityMapBtn = document.getElementById('resetFacilityMapBtn');
+const facilityMapStatus = document.getElementById('facilityMapStatus');
+const facilityType = document.getElementById('facilityType');
+const initialFacilityMap = document.getElementById('initialFacilityMap');
+const initialFacilityMapImage = document.getElementById('initialFacilityMapImage');
 
 // 이벤트 리스너 등록
-if (findPathBtn) {
-    findPathBtn.addEventListener('click', handleFindPath);
-}
-
 if (closePathResultBtn) {
     closePathResultBtn.addEventListener('click', () => {
         pathResult.style.display = 'none';
     });
 }
 
-// 시설물 목록 로드
-async function loadFacilities() {
-    try {
-        const response = await fetch('/api/wayfinding/facilities');
-        const data = await response.json();
+if (closeFacilityPathResultBtn) {
+    closeFacilityPathResultBtn.addEventListener('click', () => {
+        facilityPathResult.style.display = 'none';
+    });
+}
 
-        if (data.success) {
-            wayfindingFacilities = data.facilities;
-            populateFacilitySelects();
-            console.log(`Loaded ${data.count} facilities`);
-        } else {
-            showToast('시설물 목록을 불러오는데 실패했습니다', 'error');
+if (resetMapBtn) {
+    resetMapBtn.addEventListener('click', resetMapClickState);
+}
+
+if (resetFacilityMapBtn) {
+    resetFacilityMapBtn.addEventListener('click', resetFacilityMapClickState);
+}
+
+// 지도 초기화 (Wayfinding)
+function resetMapClickState() {
+    mapClickState.startCoords = null;
+    mapClickState.endCoords = null;
+    mapClickStatus.textContent = '지도를 클릭하여 출발지를 선택하세요';
+    mapClickStatus.style.color = 'var(--text-secondary)';
+    pathResult.style.display = 'none';
+    if (initialMap) initialMap.style.display = 'block';
+}
+
+// 지도 초기화 (Facility)
+function resetFacilityMapClickState() {
+    mapClickState.startCoords = null;
+    facilityMapStatus.textContent = '지도를 클릭하여 현재 위치를 선택하세요';
+    facilityMapStatus.style.color = 'var(--text-secondary)';
+    facilityPathResult.style.display = 'none';
+    if (initialFacilityMap) initialFacilityMap.style.display = 'block';
+}
+
+// 지도 클릭 핸들러 (Wayfinding)
+async function handleMapClick(event) {
+    const rect = event.target.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    // 이미지 크기에 대한 실제 좌표 계산
+    const scaleX = 953 / rect.width;
+    const scaleY = 676 / rect.height;
+    const actualX = x * scaleX;
+    const actualY = y * scaleY;
+
+    if (mapClickState.mode === 'wayfinding') {
+        if (!mapClickState.startCoords) {
+            // 출발지 설정
+            mapClickState.startCoords = { x: actualX, y: actualY };
+            mapClickStatus.textContent = '지도를 클릭하여 도착지를 선택하세요';
+            mapClickStatus.style.color = 'var(--success-color)';
+        } else if (!mapClickState.endCoords) {
+            // 도착지 설정 및 경로 찾기
+            mapClickState.endCoords = { x: actualX, y: actualY };
+            mapClickStatus.textContent = '경로를 계산하는 중...';
+            await findPathFromCoords();
         }
-    } catch (error) {
-        console.error('Error loading facilities:', error);
-        showToast('시설물 목록을 불러오는 중 오류가 발생했습니다', 'error');
+    } else if (mapClickState.mode === 'facility') {
+        // 현재 위치에서 가장 가까운 시설물 찾기
+        facilityMapStatus.textContent = '가장 가까운 시설물을 찾는 중...';
+        await findNearestFacility(actualX, actualY);
     }
 }
 
-// 드롭다운에 시설물 목록 채우기
-function populateFacilitySelects() {
-    if (!startLocation || !endLocation) return;
+// 좌표 기반 경로 찾기
+async function findPathFromCoords() {
+    if (!mapClickState.startCoords || !mapClickState.endCoords) return;
 
-    // 출발지 드롭다운
-    startLocation.innerHTML = '<option value="">시설물을 선택하세요...</option>';
-    wayfindingFacilities.forEach(facility => {
-        const option = document.createElement('option');
-        option.value = facility;
-        option.textContent = facility;
-        startLocation.appendChild(option);
-    });
-
-    // 도착지 드롭다운
-    endLocation.innerHTML = '<option value="">시설물을 선택하세요...</option>';
-    wayfindingFacilities.forEach(facility => {
-        const option = document.createElement('option');
-        option.value = facility;
-        option.textContent = facility;
-        endLocation.appendChild(option);
-    });
-
-    // 기본값 설정 (첫 번째와 두 번째 시설물)
-    if (wayfindingFacilities.length >= 2) {
-        startLocation.value = wayfindingFacilities[0];
-        endLocation.value = wayfindingFacilities[1];
-    }
-}
-
-// 길찾기 실행
-async function handleFindPath() {
-    const start = startLocation.value;
-    const end = endLocation.value;
-
-    // 유효성 검사
-    if (!start || !end) {
-        showToast('출발지와 도착지를 모두 선택해주세요', 'error');
-        return;
-    }
-
-    if (start === end) {
-        showToast('출발지와 도착지가 같습니다. 다른 지점을 선택해주세요', 'error');
-        return;
-    }
-
-    // 로딩 표시
     pathResult.style.display = 'none';
     pathLoading.style.display = 'flex';
 
     try {
-        const response = await fetch('/api/wayfinding/find-path', {
+        const response = await fetch('/api/wayfinding/find-path-coords', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                start: start,
-                end: end
+                start_x: mapClickState.startCoords.x,
+                start_y: mapClickState.startCoords.y,
+                end_x: mapClickState.endCoords.x,
+                end_y: mapClickState.endCoords.y
             })
         });
 
         const data = await response.json();
-
         pathLoading.style.display = 'none';
 
         if (data.success) {
-            // 결과 표시
-            pathStartName.textContent = data.start;
-            pathEndName.textContent = data.end;
             pathDistance.textContent = `${data.distance.toFixed(2)} 픽셀`;
             pathImage.src = `data:image/png;base64,${data.image}`;
+
+            // 초기 지도 숨기고 결과 표시
+            if (initialMap) initialMap.style.display = 'none';
             pathResult.style.display = 'block';
+
+            mapClickStatus.textContent = '경로를 찾았습니다! 초기화하여 다시 시작할 수 있습니다.';
+            mapClickStatus.style.color = 'var(--success-color)';
 
             showToast('경로를 찾았습니다!', 'success');
         } else {
+            mapClickStatus.textContent = `실패: ${data.message}`;
+            mapClickStatus.style.color = 'var(--danger-color)';
             showToast(`경로 찾기 실패: ${data.message || data.error}`, 'error');
+            resetMapClickState();
         }
     } catch (error) {
         pathLoading.style.display = 'none';
         console.error('Error finding path:', error);
+        mapClickStatus.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+        mapClickStatus.style.color = 'var(--danger-color)';
         showToast('경로를 찾는 중 오류가 발생했습니다', 'error');
+        resetMapClickState();
     }
 }
 
-// 탭 전환 시 시설물 목록 로드
+// 시설물 타입에 따른 검색 패턴 매핑
+const facilityPatterns = {
+    'toilet': { category: 'toilet', name_pattern: null },
+    'store': { category: 'others', name_pattern: '매점' },
+    'water': { category: 'others', name_pattern: '음수대' },
+    'parking': { category: 'others', name_pattern: '주차 사전무인정산기' }
+};
+
+// 가장 가까운 시설물 찾기
+async function findNearestFacility(x, y) {
+    facilityPathResult.style.display = 'none';
+    facilityPathLoading.style.display = 'flex';
+
+    try {
+        const selectedType = facilityType.value;
+        const searchParams = facilityPatterns[selectedType] || { category: 'toilet', name_pattern: null };
+
+        const response = await fetch('/api/wayfinding/nearest-facility', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                x: x,
+                y: y,
+                category: searchParams.category,
+                name_pattern: searchParams.name_pattern
+            })
+        });
+
+        const data = await response.json();
+        facilityPathLoading.style.display = 'none';
+
+        if (data.success) {
+            facilityPathDistance.textContent = `${data.distance.toFixed(2)} 픽셀`;
+            facilityPathImage.src = `data:image/png;base64,${data.image}`;
+
+            // 초기 지도 숨기고 결과 표시
+            if (initialFacilityMap) initialFacilityMap.style.display = 'none';
+            facilityPathResult.style.display = 'block';
+
+            facilityMapStatus.textContent = '가장 가까운 시설물로의 경로를 찾았습니다!';
+            facilityMapStatus.style.color = 'var(--success-color)';
+
+            showToast('가장 가까운 시설물을 찾았습니다!', 'success');
+
+            // 지도 클릭 핸들러 추가 (결과 이미지에)
+            if (facilityPathImage) {
+                facilityPathImage.addEventListener('click', handleMapClick);
+            }
+        } else {
+            facilityMapStatus.textContent = `실패: ${data.message}`;
+            facilityMapStatus.style.color = 'var(--danger-color)';
+            showToast(`시설물 찾기 실패: ${data.message || data.error}`, 'error');
+            resetFacilityMapClickState();
+        }
+    } catch (error) {
+        facilityPathLoading.style.display = 'none';
+        console.error('Error finding nearest facility:', error);
+        facilityMapStatus.textContent = '오류가 발생했습니다. 다시 시도해주세요.';
+        facilityMapStatus.style.color = 'var(--danger-color)';
+        showToast('시설물을 찾는 중 오류가 발생했습니다', 'error');
+        resetFacilityMapClickState();
+    }
+}
+
+// 탭 전환 시 모드 설정 및 이미지 클릭 이벤트 추가
 const originalHandleTabChange = handleTabChange;
 handleTabChange = function(e) {
     originalHandleTabChange(e);
 
     const tabName = e.currentTarget.getAttribute('data-tab');
-    if (tabName === 'wayfinding' && wayfindingFacilities.length === 0) {
-        loadFacilities();
+
+    if (tabName === 'wayfinding') {
+        mapClickState.mode = 'wayfinding';
+        resetMapClickState();
+
+        // 초기 지도 및 결과 지도 이미지에 클릭 이벤트 추가
+        setTimeout(() => {
+            if (initialMapImage) {
+                initialMapImage.addEventListener('click', handleMapClick);
+            }
+            if (pathImage) {
+                pathImage.addEventListener('click', handleMapClick);
+            }
+        }, 100);
+    } else if (tabName === 'facility') {
+        mapClickState.mode = 'facility';
+        resetFacilityMapClickState();
+
+        // 초기 지도 및 결과 지도 이미지에 클릭 이벤트 추가
+        setTimeout(() => {
+            if (initialFacilityMapImage) {
+                initialFacilityMapImage.addEventListener('click', handleMapClick);
+            }
+            if (facilityPathImage) {
+                facilityPathImage.addEventListener('click', handleMapClick);
+            }
+        }, 100);
     }
 };
