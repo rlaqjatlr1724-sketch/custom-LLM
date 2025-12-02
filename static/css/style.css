@@ -529,10 +529,12 @@ body {
 .btn-danger {
     background-color: var(--danger-color);
     color: white;
+    opacity: 0.85;
 }
 
 .btn-danger:hover {
     background-color: #dc2626;
+    opacity: 1;
 }
 
 .store-info {
@@ -596,7 +598,7 @@ body {
 /* 검색 컨테이너 */
 .search-container {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 24px;
     margin-bottom: 24px;
 }
@@ -1372,7 +1374,7 @@ body {
     border-radius: 12px;
     box-shadow: var(--shadow-md);
     overflow: hidden;
-    max-height: 600px;
+    max-height: 800px;
 }
 
 .chat-header {
@@ -1399,8 +1401,8 @@ body {
     flex-direction: column;
     gap: 16px;
     background: var(--bg-secondary);
-    min-height: 300px;
-    max-height: 400px;
+    min-height: 500px;
+    max-height: 600px;
 }
 
 .chat-history::-webkit-scrollbar {
