@@ -11,7 +11,6 @@ if not GEMINI_API_KEY:
 
 # 챗봇 설정
 FILE_STORE_NAME = '챗봇저장소'
-DOCS_DIR = "DOCS_DIR"  # 문서가 들어있는 폴더명
 MODEL_NAME = "gemini-2.5-flash"
 
 # 재시도 설정

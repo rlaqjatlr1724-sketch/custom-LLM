@@ -185,6 +185,53 @@ class WayfindingService:
         logger.info(f"Graph loaded: {len(nodes)} nodes, {len(G.edges)} edges")
         return self._graph, self._facilities, self._tree, self._node_list
 
+    def calculate_path_bounds_and_zoom(self, ax, path, start_coords, end_coords, margin_percent=0.2):
+        """
+        경로의 범위를 계산하고 해당 영역으로 확대
+
+        Args:
+            ax: matplotlib axis 객체
+            path: 경로 좌표 리스트
+            start_coords: 출발지 좌표 (x, y)
+            end_coords: 도착지 좌표 (x, y)
+            margin_percent: 여백 비율 (기본 20%)
+        """
+        # 경로의 모든 좌표 수집
+        all_x = [p[0] for p in path] + [start_coords[0], end_coords[0]]
+        all_y = [p[1] for p in path] + [start_coords[1], end_coords[1]]
+
+        # 최소/최대 좌표 계산
+        min_x, max_x = min(all_x), max(all_x)
+        min_y, max_y = min(all_y), max(all_y)
+
+        # 범위 크기 계산
+        range_x = max_x - min_x
+        range_y = max_y - min_y
+
+        # 최소 범위 보장 (경로가 너무 짧을 경우)
+        min_range = 100  # 픽셀
+        if range_x < min_range:
+            center_x = (min_x + max_x) / 2
+            min_x = center_x - min_range / 2
+            max_x = center_x + min_range / 2
+            range_x = min_range
+
+        if range_y < min_range:
+            center_y = (min_y + max_y) / 2
+            min_y = center_y - min_range / 2
+            max_y = center_y + min_range / 2
+            range_y = min_range
+
+        # 여백 추가
+        margin_x = range_x * margin_percent
+        margin_y = range_y * margin_percent
+
+        # 확대 범위 설정
+        ax.set_xlim(min_x - margin_x, max_x + margin_x)
+        ax.set_ylim(max_y + margin_y, min_y - margin_y)  # Y축은 반전
+
+        logger.info(f"Zoom bounds calculated: x=({min_x-margin_x:.1f}, {max_x+margin_x:.1f}), y=({min_y-margin_y:.1f}, {max_y+margin_y:.1f})")
+
     def get_facility_names(self):
         """시설물 이름 목록 반환"""
         _, facilities, _, _ = self.load_graph_data()
@@ -278,31 +325,37 @@ class WayfindingService:
 
             ax.plot(path_x, path_y, color='red', linewidth=2, label='추천 경로', alpha=0.5)
 
-            # 출발지/도착지 표시 (원형 액자 마스코트)
+            # 출발지/도착지 표시 (경로의 시작점과 끝점에 원형 액자 마스코트)
+            path_start = path[0]  # 경로 시작점
+            path_end = path[-1]   # 경로 끝점
+
             if self.mascot_image_path.exists():
                 # 출발지 원형 마스코트 (파란색 테두리)
                 start_mascot = self.create_circular_mascot('#3399ff', size=50)
                 if start_mascot is not None:
                     imagebox_start = OffsetImage(start_mascot, zoom=0.5)
-                    ab_start = AnnotationBbox(imagebox_start, start_coords, frameon=False,
+                    ab_start = AnnotationBbox(imagebox_start, path_start, frameon=False,
                                               box_alignment=(0.5, 0.5))
                     ax.add_artist(ab_start)
                 else:
-                    ax.scatter(*start_coords, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                    ax.scatter(*path_start, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
 
                 # 도착지 원형 마스코트 (초록색 테두리)
                 end_mascot = self.create_circular_mascot('#33ff99', size=50)
                 if end_mascot is not None:
                     imagebox_end = OffsetImage(end_mascot, zoom=0.5)
-                    ab_end = AnnotationBbox(imagebox_end, end_coords, frameon=False,
+                    ab_end = AnnotationBbox(imagebox_end, path_end, frameon=False,
                                            box_alignment=(0.5, 0.5))
                     ax.add_artist(ab_end)
                 else:
-                    ax.scatter(*end_coords, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                    ax.scatter(*path_end, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
             else:
                 # 마스코트 파일이 없으면 원으로 표시
-                ax.scatter(*start_coords, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
-                ax.scatter(*end_coords, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                ax.scatter(*path_start, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                ax.scatter(*path_end, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+
+            # 경로 범위로 자동 확대
+            self.calculate_path_bounds_and_zoom(ax, path, start_coords, end_coords)
 
             # 꾸미기
             ax.axis('off')
@@ -321,12 +374,10 @@ class WayfindingService:
 
             return {
                 'success': True,
-                'message': f'{start_name}에서 {end_name}까지의 최단 경로입니다!',
+                'message': '최단 경로를 찾았습니다!',
                 'image': image_base64,
                 'distance': float(distance_km),
-                'distance_pixels': float(path_length),
-                'start': start_name,
-                'end': end_name
+                'distance_pixels': float(path_length)
             }
 
         except Exception as e:
@@ -437,31 +488,37 @@ class WayfindingService:
 
             ax.plot(path_x, path_y, color='red', linewidth=3, label='추천 경로', alpha=0.7)
 
-            # 출발지/도착지 표시 (원형 액자 마스코트)
+            # 출발지/도착지 표시 (경로의 시작점과 끝점에 원형 액자 마스코트)
+            path_start = path[0]  # 경로 시작점
+            path_end = path[-1]   # 경로 끝점
+
             if self.mascot_image_path.exists():
                 # 출발지 원형 마스코트 (파란색 테두리)
                 start_mascot = self.create_circular_mascot('#3399ff', size=50)
                 if start_mascot is not None:
                     imagebox_start = OffsetImage(start_mascot, zoom=0.5)
-                    ab_start = AnnotationBbox(imagebox_start, (start_x, start_y), frameon=False,
+                    ab_start = AnnotationBbox(imagebox_start, path_start, frameon=False,
                                               box_alignment=(0.5, 0.5))
                     ax.add_artist(ab_start)
                 else:
-                    ax.scatter(start_x, start_y, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                    ax.scatter(*path_start, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
 
                 # 도착지 원형 마스코트 (초록색 테두리)
                 end_mascot = self.create_circular_mascot('#33ff99', size=50)
                 if end_mascot is not None:
                     imagebox_end = OffsetImage(end_mascot, zoom=0.5)
-                    ab_end = AnnotationBbox(imagebox_end, (end_x, end_y), frameon=False,
+                    ab_end = AnnotationBbox(imagebox_end, path_end, frameon=False,
                                            box_alignment=(0.5, 0.5))
                     ax.add_artist(ab_end)
                 else:
-                    ax.scatter(end_x, end_y, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                    ax.scatter(*path_end, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
             else:
                 # 마스코트 파일이 없으면 원으로 표시
-                ax.scatter(start_x, start_y, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
-                ax.scatter(end_x, end_y, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                ax.scatter(*path_start, color='#3399ff', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+                ax.scatter(*path_end, color='#33ff99', s=250, zorder=5, edgecolors='white', linewidth=3, alpha=0.9)
+
+            # 경로 범위로 자동 확대
+            self.calculate_path_bounds_and_zoom(ax, path, (start_x, start_y), (end_x, end_y))
 
             # 꾸미기
             ax.axis('off')
